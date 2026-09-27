@@ -1,1 +1,1 @@
-{"project": "d34d5a85-aa0d-454e-b6c3-7eedc234af1b", "env": "4ec1ab97-fe5a-42cc-9ba4-2ddaccdb78cc", "service": "ce0eff79-f408-4ef6-8128-7a76f04d86e7", "domain": {"serviceDomainCreate": {"domain": "glia-production-067f.up.railway.app"}}}
+{"project": "d34d5a85-aa0d-454e-b6c3-7eedc234af1b", "env": "4ec1ab97-fe5a-42cc-9ba4-2ddaccdb78cc", "service": "ce0eff79-f408-4ef6-8128-7a76f04d86e7", "domain": {"serviceDomainCreate": {"domain": "glia-production.up.railway.app"}}}

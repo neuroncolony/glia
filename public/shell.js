@@ -313,7 +313,7 @@ window.GLIA = (() => {
     if (!isDev() && !document.querySelector('.sky-bg')) {
       const sky = document.createElement('div');
       sky.className = 'sky-bg';
-      sky.innerHTML = '<video muted loop playsinline autoplay preload="auto" src="/static/assets/sky-bg.mp4"></video>';
+      sky.innerHTML = '<div class="sky-img"></div>';
       document.body.prepend(sky);
       const v = sky.firstElementChild;
       v.addEventListener('canplay', () => v.classList.add('on'), { once: true });

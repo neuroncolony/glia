@@ -1,5 +1,5 @@
 """Uploaded token logos. Stored in the JSON store (base64) and served from /api/logo/<id>.
-Optionally mirrored to a GitHub repo (GITHUB_TOKEN + AXON_ASSETS_REPO) so the URL written on-chain survives redeploys."""
+Optionally mirrored to a GitHub repo (GITHUB_TOKEN + GLIA_ASSETS_REPO) so the URL written on-chain survives redeploys."""
 import base64, hashlib, json, os, re, time
 import store
 try: from urllib import request as _rq
@@ -12,7 +12,7 @@ def rate_ok(ip):
     if len(hits) >= 12: RATE[ip] = hits; return False
     hits.append(now); RATE[ip] = hits; return True
 
-def mirror_enabled(): return bool(os.environ.get('GITHUB_TOKEN') and os.environ.get('AXON_ASSETS_REPO'))
+def mirror_enabled(): return bool(os.environ.get('GITHUB_TOKEN') and os.environ.get('GLIA_ASSETS_REPO'))
 
 def _sniff(b):
     if b[:8] == b'\x89PNG\r\n\x1a\n': return 'image/png', 'png'
@@ -46,11 +46,11 @@ def get(lid):
 
 def _mirror(lid, ext, raw):
     if not mirror_enabled() or not _rq: return None
-    repo = os.environ['AXON_ASSETS_REPO'].strip('/'); path = f'logos/{lid}.{ext}'
+    repo = os.environ['GLIA_ASSETS_REPO'].strip('/'); path = f'logos/{lid}.{ext}'
     try:
         req = _rq.Request(f'https://api.github.com/repos/{repo}/contents/{path}', method='PUT',
             data=json.dumps({'message': f'logo {lid}', 'content': base64.b64encode(raw).decode()}).encode(),
-            headers={'Authorization': 'Bearer ' + os.environ['GITHUB_TOKEN'], 'Accept': 'application/vnd.github+json', 'User-Agent': 'axon', 'Content-Type': 'application/json'})
+            headers={'Authorization': 'Bearer ' + os.environ['GITHUB_TOKEN'], 'Accept': 'application/vnd.github+json', 'User-Agent': 'glia', 'Content-Type': 'application/json'})
         with _rq.urlopen(req, timeout=20) as r:
             if r.status in (200, 201): return f'https://cdn.jsdelivr.net/gh/{repo}@main/{path}'
     except Exception as e:

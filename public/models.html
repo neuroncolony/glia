@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('axon.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('glia.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{BRAND}} · Models</title><meta name="description" content="{{DESCRIPTION}}">
 <link rel="stylesheet" href="static/styles.css"><script src="static/shell.js" defer></script></head>
 <body><header class="nav" id="nav"></header>
@@ -12,7 +12,7 @@
 <footer class="footer" id="footer"></footer>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-  const { api, esc, fmtUsd, href } = AXON;
+  const { api, esc, fmtUsd, href } = GLIA;
   const ctx = n => n == null ? 'n/a' : n >= 1e6 ? (n / 1e6).toFixed(n % 1e6 ? 1 : 0) + 'M' : Math.round(n / 1e3) + 'K';
   const price = v => v == null ? 'n/a' : '$' + (v >= 1 ? v.toFixed(2) : v.toFixed(4)) + '/M';
   api('models').then(({ models, usage }) => {

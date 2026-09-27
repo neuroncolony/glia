@@ -1,6 +1,6 @@
-"""axon chain layer: pons v2 on Robinhood Chain (4663).
+"""glia chain layer: pons v2 on Robinhood Chain (4663).
 Read-only RPC plus unsigned transaction builders. No private keys here.
-Every launch made through axon sets creatorFeeRecipient = AXON_TREASURY so the
+Every launch made through glia sets creatorFeeRecipient = GLIA_TREASURY so the
 creator tax slice (2%) funds the shared compute pool. Nothing here is simulated."""
 import os, re, json, time, threading
 from eth_abi import encode, decode
@@ -10,12 +10,12 @@ try:
 except Exception:
     from compat import proxied_get, proxied_post
 
-RPC = os.environ.get('AXON_RPC', '').strip() or 'https://rpc.mainnet.chain.robinhood.com'
-PONS = (os.environ.get('AXON_PONS_FACTORY', '').strip() or '0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e').lower()
-ESCROW = (os.environ.get('AXON_PONS_ESCROW', '').strip() or '0xd3afeb2a57f70ef218aa82451c51b2fb0416ac9e').lower()
+RPC = os.environ.get('GLIA_RPC', '').strip() or 'https://rpc.mainnet.chain.robinhood.com'
+PONS = (os.environ.get('GLIA_PONS_FACTORY', '').strip() or '0x7ed598bcef8bd9edd8c97a195c6d13f40801ec7e').lower()
+ESCROW = (os.environ.get('GLIA_PONS_ESCROW', '').strip() or '0xd3afeb2a57f70ef218aa82451c51b2fb0416ac9e').lower()
 ZERO = '0x' + '0' * 40
 CHAIN_ID = 4663
-CALLER = 'preview:axon'
+CALLER = 'preview:glia'
 CREATOR_TAX_BPS = 200
 SOCIALS = '(string,string,string,string,string)'
 PARAM_TUPLE = '(string,string,string,string,' + SOCIALS + ',address,uint16,bool,bytes32,bytes32)'
@@ -33,7 +33,7 @@ _cache, _lock = {}, threading.Lock()
 class ChainError(Exception): pass
 
 def treasury():
-    t = os.environ.get('AXON_TREASURY', '').strip()
+    t = os.environ.get('GLIA_TREASURY', '').strip()
     return to_checksum_address(t) if re.fullmatch(r'0x[0-9a-fA-F]{40}', t) else None
 
 def addr(value):
@@ -51,7 +51,7 @@ def rpc(method, params):
     data = None
     for attempt in range(4):
         r = proxied_post(RPC, json={'jsonrpc':'2.0','id':1,'method':method,'params':params},
-                         headers={'SC-CALLER-ID':CALLER,'User-Agent':'Mozilla/5.0 axon'}, timeout=25)
+                         headers={'SC-CALLER-ID':CALLER,'User-Agent':'Mozilla/5.0 glia'}, timeout=25)
         if r.status_code == 429 and attempt < 3:
             time.sleep(0.6 * (2 ** attempt)); continue
         r.raise_for_status()
@@ -71,7 +71,7 @@ def rpc_batch(calls):
         payload = [{'jsonrpc': '2.0', 'id': j, 'method': m, 'params': p} for j, (m, p) in enumerate(chunk)]
         data = None
         for attempt in range(4):
-            r = proxied_post(RPC, json=payload, headers={'SC-CALLER-ID': CALLER, 'User-Agent': 'Mozilla/5.0 axon'}, timeout=40)
+            r = proxied_post(RPC, json=payload, headers={'SC-CALLER-ID': CALLER, 'User-Agent': 'Mozilla/5.0 glia'}, timeout=40)
             if r.status_code in (429, 503) and attempt < 3:
                 time.sleep(0.6 * (2 ** attempt)); continue
             if r.status_code != 200: break
@@ -151,9 +151,9 @@ def launched(token):
     return {'token':a(words[0]),'curve':a(words[1]),'deployer':a(words[2]),'creatorFeeRecipient':a(words[3]),'pairToken':a(words[4]),
             'graduationThreshold':str(u(words[5])),'poolFee':u(words[6]),'creatorTaxBps':u(words[8]),'buybackEnabled':bool(u(words[9])),'phase':u(words[10])}
 
-MODEL_TAG = re.compile(rb'axon:model=([\x21-\x7e]{1,64})')
+MODEL_TAG = re.compile(rb'glia:model=([\x21-\x7e]{1,64})')
 def model_from_tx(txhash):
-    """Recover the model id from the launch calldata: launch_tx() appends 'axon:model=<id>' to the on-chain description, so the registry can always be rebuilt from chain."""
+    """Recover the model id from the launch calldata: launch_tx() appends 'glia:model=<id>' to the on-chain description, so the registry can always be rebuilt from chain."""
     try:
         t = rpc('eth_getTransactionByHash', [txhash])
         m = MODEL_TAG.search(bytes.fromhex((t or {}).get('input', '0x')[2:]))
@@ -195,7 +195,7 @@ def token_snapshot(token):
     mcap = (price * supply / 10**18) if (price and supply) else None
     ours = bool(treasury()) and info['creatorFeeRecipient'].lower() == treasury().lower()
     return {**info, **meta, 'curve_state':{k:(str(v) if isinstance(v,int) else v) for k,v in curve.items()},
-            'priceEth':price,'marketCapEth':mcap,'fundedByAxon':ours,'explorer':EXPLORER + '/address/' + info['token'],'readAt':int(time.time())}
+            'priceEth':price,'marketCapEth':mcap,'fundedByGlia':ours,'explorer':EXPLORER + '/address/' + info['token'],'readAt':int(time.time())}
 
 def launch_logs(from_block, to_block='latest'):
     logs = rpc('eth_getLogs',[{'fromBlock':hex(from_block),'toBlock':to_block,'address':PONS,'topics':[LAUNCH_TOPIC]}])
@@ -230,7 +230,7 @@ def token_from_receipt(txhash):
 # ---------------------------------------------------------------- tx builders (unsigned, wallet signs)
 def launch_tx(form):
     t = treasury()
-    if not t: raise ChainError('AXON_TREASURY is not configured, launches are disabled.')
+    if not t: raise ChainError('GLIA_TREASURY is not configured, launches are disabled.')
     name = str(form.get('name','')).strip(); symbol = str(form.get('symbol','')).strip().upper()
     description = str(form.get('description','')).strip(); logo = str(form.get('logo','')).strip()
     model = str(form.get('model','')).strip()
@@ -246,7 +246,7 @@ def launch_tx(form):
         if len(u.encode()) > 200: raise ValueError('Links are capped at 200 bytes.')
     salt = os.urandom(32)
     # model id rides in the description tail so it is recoverable on-chain without a server
-    desc = (description + ('\n' if description else '') + 'axon:model=' + model)[:500]
+    desc = (description + ('\n' if description else '') + 'glia:model=' + model)[:500]
     socials = (website, x, telegram, '', '')
     params = (name, symbol, logo, desc, socials, t, CREATOR_TAX_BPS, False, economics(), salt)
     data = calldata('launchToken(' + PARAM_TUPLE + ',uint256,address)', [PARAM_TUPLE, 'uint256', 'address'], [params, 0, ZERO])
@@ -363,6 +363,6 @@ def claim_tx(sender=None):
     """Escrow claim(). Pays msg.sender its balance, so it must be signed by the treasury wallet itself.
     The server additionally refuses to build the tx for anyone but CLAIMER."""
     t = treasury()
-    if not t: raise ChainError('AXON_TREASURY is not configured.')
+    if not t: raise ChainError('GLIA_TREASURY is not configured.')
     if (sender or '').lower() != CLAIMER.lower(): raise ChainError('Only the treasury owner wallet can claim.')
     return {'tx': {'to': to_checksum_address(ESCROW), 'data': calldata('claim()'), 'value': '0x0', 'chainId': CHAIN_ID}, 'claimTo': t, 'claimableWei': str(escrow_claimable(t))}

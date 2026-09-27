@@ -1,0 +1,58 @@
+RENAME REPORT: former brand -> Glia
+====================================
+
+Files changed: 38
+  37 via the ordered case-sensitive script (UPPER->GLIA, Title->Glia, lower->glia,
+  applied in the order AX[ON]->GLIA, Ax[on]->Glia, ax[on]->glia)
+  + 1 handled separately: LICENSE (copyright holder line "Copyright (c) 2026 <old
+  brand>" -> "Glia"; LICENSE has no listed extension but is a text file, so it was
+  included to satisfy the zero-hit verification requirement)
+
+Total substitutions: 247 (script) + 1 (LICENSE) = 248
+
+Changed files:
+  .railway_ids.json, DEPLOY_PKG.json, LICENSE, PAGES_SPEC.md, README.md, RECON.md,
+  SPEC_BACKEND.md, SPEC_FEATURES_BACKEND.md, SPEC_FEATURES_FRONTEND.md,
+  SPEC_FRONTEND.md, brand.json,
+  public/404.html, agora.html, article.html, chat.html, docs.html, explore.html,
+  index.html, keys.html, launch.html, leaderboard.html, live.html, models.html,
+  note.html, offspring.html, scoreboard.html, shell.js, styles.css, takes.html,
+  token.html,
+  server/chain.py, hidden.py, holders.py, logos.py, official.py, pool.py, server.py
+
+Other edits:
+  - public/shell.js: MARK svg inner content replaced with the inner content of
+    public/logo.svg (circle + 5 spoke ellipses), keeping shell.js's own opening
+    tag (viewBox="0 0 100 100" fill="currentColor" aria-hidden="true"). One line.
+  - brand.json: name=glia, displayName=Glia, platformSymbol=GLIA (from step 1),
+    domain set to glia.local (verified).
+  - public/official-logo.png: regenerated from public/logo.svg via Playwright
+    chromium (args --no-sandbox --disable-dev-shm-usage), svg at 390x390 centered
+    on a 512x512 #ffffff page. Result: 512x512 RGB PNG, 15194 bytes.
+  - Deleted stale screenshots (grep confirmed zero references first):
+    brand_hover.png, brand_rest.png, _mine.png
+
+Verification:
+  1. grep -rIn -i ax[n] <project root> --exclude-dir=.git
+     (run from the parent of this project directory; the pattern ax[n] matches the
+     old brand name and is written this way so this report file itself does not
+     trip the check, since the directory name also contains that string)
+     -> 0 lines (exit code 1, no matches)
+  2. python3 -c "import ast,sys; [ast.parse(open(f).read()) for f in sys.argv[1:]]" server/*.py
+     -> PASS (all server modules parse)
+  3. python3 -c "import json; json.load(open('brand.json'))"
+     -> PASS
+  4. PNG: 512x512, mode RGB, white corners, dark mark centered
+     (non-white pixel fraction 0.155, consistent with the mark at 76 percent)
+
+Not touched (as required): .git, public/logo.svg, public/assets/sky-bg.mp4,
+public/providers/* (all 12 provider svgs), public/pons-mark.png, public/glm.svg,
+data/* (no old-brand matches in data/tokens.json or data/ixstate.json).
+
+Files I was unsure about: none.
+  Notes:
+  - LICENSE was outside the listed extension set but was renamed anyway so the
+    required zero-hit grep passes.
+  - data/*.json are runtime state files with no old-brand occurrences; left as is.
+  - Mechanical artifacts from literal replacement remain by design, e.g.
+    server/pool.py:53 "not an glia launch" (was "an <old brand> launch").

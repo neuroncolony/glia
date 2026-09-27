@@ -1,10 +1,10 @@
-/* axon shell: brand, nav, wallet (EIP-6963 + window.ethereum), api helpers, formatters. Loaded by every page. */
-window.AXON = (() => {
-  const MARK = '<svg viewBox="0 0 100 100" fill="currentColor" aria-hidden="true"><ellipse cx="50" cy="7.9" rx="17.8" ry="7.9"/><ellipse cx="85.8" cy="29.3" rx="17.9" ry="8" transform="rotate(60 85.8 29.3)"/><ellipse cx="85.7" cy="71.7" rx="17.8" ry="7.9" transform="rotate(120 85.7 71.7)"/><ellipse cx="50" cy="92.4" rx="17.8" ry="7.8"/><ellipse cx="14.4" cy="71.6" rx="17.8" ry="7.9" transform="rotate(60 14.4 71.6)"/><ellipse cx="14.5" cy="29.3" rx="17.9" ry="8" transform="rotate(120 14.5 29.3)"/></svg>';
-  window.AXON_MARK = MARK;
+/* glia shell: brand, nav, wallet (EIP-6963 + window.ethereum), api helpers, formatters. Loaded by every page. */
+window.GLIA = (() => {
+  const MARK = '<svg viewBox="0 0 100 100" fill="currentColor" aria-hidden="true"><circle cx="50" cy="50" r="13"/><ellipse cx="50.0" cy="23.0" rx="23" ry="6.2" transform="rotate(-90 50.0 23.0)"/><circle cx="50.0" cy="2.0" r="4.6"/><ellipse cx="75.7" cy="41.7" rx="23" ry="6.2" transform="rotate(-18 75.7 41.7)"/><circle cx="95.7" cy="35.2" r="4.6"/><ellipse cx="65.9" cy="71.8" rx="23" ry="6.2" transform="rotate(54 65.9 71.8)"/><circle cx="78.2" cy="88.8" r="4.6"/><ellipse cx="34.1" cy="71.8" rx="23" ry="6.2" transform="rotate(126 34.1 71.8)"/><circle cx="21.8" cy="88.8" r="4.6"/><ellipse cx="24.3" cy="41.7" rx="23" ry="6.2" transform="rotate(198 24.3 41.7)"/><circle cx="4.3" cy="35.2" r="4.6"/></svg>';
+  window.GLIA_MARK = MARK;
   if (!document.querySelector('link[rel="icon"]')) { const l = document.createElement('link'); l.rel = 'icon'; l.type = 'image/svg+xml'; l.href = '/logo.svg'; document.head.appendChild(l); }
 
-  const BRAND = { name: 'axon', display: 'Axon', symbol: 'AXON' };
+  const BRAND = { name: 'glia', display: 'Glia', symbol: 'GLIA' };
   const CHAIN = { id: 4663, hex: '0x1237', name: 'Robinhood Chain', rpc: 'https://rpc.mainnet.chain.robinhood.com', explorer: 'https://robinhoodchain.blockscout.com' };
   const NAV = [['/explore','Markets'],['/live','Live'],['/agora','Agora'],['/models','Models'],['/chat','Chat'],['/keys','API'],['/docs','Docs']];
   const base = new URL(document.querySelector('base')?.href || (location.pathname.match(/^\/preview\/[^/]+\//)?.[0] || '/'), location.origin);
@@ -16,7 +16,7 @@ window.AXON = (() => {
 
   // ---------- dev mode theme
   const isDev = () => document.documentElement.getAttribute('data-theme') === 'dev';
-  function setTheme(dev){ try{ dev ? localStorage.setItem('axon.theme','dev') : localStorage.removeItem('axon.theme'); }catch(e){} location.reload(); }
+  function setTheme(dev){ try{ dev ? localStorage.setItem('glia.theme','dev') : localStorage.removeItem('glia.theme'); }catch(e){} location.reload(); }
 
   // ---------- api
   async function api(path, body, opts={}) {
@@ -47,8 +47,8 @@ window.AXON = (() => {
 
   // ---------- cookie notice (bottom right, non-blocking, separate from the terms gate)
   function cookieBar() {
-    const CK = 'axon_cookies';
-    if (localStorage.getItem(CK) || document.cookie.split(';').some(c => /^axon_cookies=/.test(c.trim()))) return;
+    const CK = 'glia_cookies';
+    if (localStorage.getItem(CK) || document.cookie.split(';').some(c => /^glia_cookies=/.test(c.trim()))) return;
     const set = v => { document.cookie = CK + '=' + v + '; max-age=31536000; path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : ''); localStorage.setItem(CK, v); };
     const el = document.createElement('div'); el.className = 'cookie-pop';
     el.innerHTML = `<div class="cookie-t">Cookies</div><p>We use one first-party cookie to remember your choices. No trackers, no third-party analytics.</p><div class="cookie-actions"><button class="btn ghost" data-no>Decline</button><button class="btn accent" data-ok>Accept</button></div>`;
@@ -59,7 +59,7 @@ window.AXON = (() => {
 
   // ---------- entry gate (terms). Must be accepted before using the site.
   (function gate() {
-    const KEY = 'axon_consent', EXIT = 'https://www.ponsfamily.com';
+    const KEY = 'glia_consent', EXIT = 'https://www.ponsfamily.com';
     const has = () => document.cookie.split(';').some(c => c.trim().startsWith(KEY + '=1')) || localStorage.getItem(KEY) === '1';
     if (has()) { const mount = () => cookieBar(); document.body ? mount() : document.addEventListener('DOMContentLoaded', mount); return; }
     const accept = () => { document.cookie = KEY + '=1; max-age=31536000; path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : ''); localStorage.setItem(KEY, '1'); m.classList.add('out'); document.documentElement.classList.remove('gated'); setTimeout(() => m.remove(), 320); cookieBar(); };
@@ -68,7 +68,7 @@ window.AXON = (() => {
     m.innerHTML = `<div class="card modal-card gate-card">
       <div class="gate-mark">${MARK}</div>
       <h2 class="modal-title">Before you enter</h2>
-      <p>axon is a token launcher on Robinhood Chain. Tokens launched here are experimental and can go to zero. Nothing on this site is financial advice. Trades are on-chain and cannot be reversed.</p>
+      <p>glia is a token launcher on Robinhood Chain. Tokens launched here are experimental and can go to zero. Nothing on this site is financial advice. Trades are on-chain and cannot be reversed.</p>
       <p>By entering you confirm you are of legal age where you live, you are not in a restricted jurisdiction, and you accept the <a href="/docs#limits">honest limits</a> of this product.</p>
       <div class="gate-actions"><button class="btn ghost" data-leave>I do not accept</button><button class="btn accent" data-accept>Accept and enter</button></div>
     </div>`;
@@ -88,8 +88,8 @@ window.AXON = (() => {
     state.provider = p.provider; state.address = addr; state.chainId = await p.provider.request({ method:'eth_chainId' });
     p.provider.on?.('accountsChanged', a => { state.address = a[0] || null; session = null; renderNav(); });
     p.provider.on?.('chainChanged', c => { state.chainId = c; });
-    localStorage.setItem('axon.wallet', p.info.name); renderNav();
-    document.dispatchEvent(new CustomEvent('axon:wallet', { detail:{ address: addr } }));
+    localStorage.setItem('glia.wallet', p.info.name); renderNav();
+    document.dispatchEvent(new CustomEvent('glia:wallet', { detail:{ address: addr } }));
   }
   function openWalletModal() {
     return new Promise((resolve, reject) => {
@@ -111,7 +111,7 @@ window.AXON = (() => {
     state.chainId = c;
   }
   // ---------- dev mode: one signature at entry, then a local key signs everything
-  const DEV_ACK = 'axon.dev.ack', DEV_SK = 'axon.dev.sk';
+  const DEV_ACK = 'glia.dev.ack', DEV_SK = 'glia.dev.sk';
   const devSk = () => { try { return localStorage.getItem(DEV_SK); } catch (e) { return null; } };
   const devOn = () => isDev() && !!devSk();
   let _v = null;
@@ -193,7 +193,7 @@ window.AXON = (() => {
       <h2 class="modal-title">Dev mode</h2>
       <p>Dev mode is the fast lane. No animation, no video, no chrome, and no wallet prompt between you and the chain.</p>
       <p>You sign <b>once</b> when you turn it on. That single signature opens your session across the whole site, so nothing asks you to sign in again.</p>
-      <p>After that, axon creates a <b>dev key inside this browser</b>. You fund it from your wallet, and every launch, buy and sell is signed by that key on its own.</p>
+      <p>After that, glia creates a <b>dev key inside this browser</b>. You fund it from your wallet, and every launch, buy and sell is signed by that key on its own.</p>
       <div class="dev-warnbox"><b>Read this before you accept.</b><ul>
         <li>Transactions go through with <b>no confirmation step</b>. A click is the whole flow.</li>
         <li>It spends <b>real ETH</b> on chain ${CHAIN.id}. Nothing here is a testnet.</li>
@@ -262,7 +262,7 @@ window.AXON = (() => {
   function renderNav() {
     const path = location.pathname.replace(base.pathname.replace(/\/$/,''), '') || '/';
     const nav = $('#nav'); if (!nav) return;
-    nav.innerHTML = `<div class="wrap nav-row"><div class="pill pill-left"><a class="brand" href="${href('/')}"><span class="mark">${MARK}</span><span class="wm-text">${BRAND.name}</span></a><nav class="nav-links">${NAV.map(([p,l])=>`<a href="${href(p)}" class="${path.startsWith(p)?'active':''}">${l}</a>`).join('')}</nav><button class="btn sm ghost nav-burger" id="burger" aria-label="menu">&#9776;</button></div><div class="pill pill-right"><button class="theme-tg" id="theme-tg" type="button" title="${isDev() ? 'Standard theme' : 'Dev theme'}" aria-label="Toggle theme" aria-pressed="${isDev()}"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 2.2v15.6a7.8 7.8 0 0 1 0-15.6z"/></svg></button><a class="nav-x" href="https://x.com/axonpad" target="_blank" rel="noopener" aria-label="axon on X"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.9 1.2h3.7l-8.1 9.3L24 22.8h-7.5l-5.9-7.7-6.7 7.7H.2l8.7-9.9L0 1.2h7.7l5.3 7 6-7zm-1.3 19.4h2L6.6 3.3H4.4l13.2 17.3z"/></svg></a><a class="nav-x nav-pons" href="https://www.ponsfamily.com/launchpad" data-pons target="_blank" rel="noopener" aria-label="axon on pons"><svg width="17" height="17" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M209 79L307 79L307 80L317 80L317 81L326 82L328 84L338 87L339 89L343 90L348 95L350 95L358 103L358 105L360 106L360 108L362 109L362 111L364 112L364 114L366 115L369 121L369 124L372 129L373 139L374 139L374 263L373 263L373 268L372 268L372 271L368 279L361 286L351 291L342 292L342 293L264 293L264 294L259 295L255 299L254 305L253 305L253 393L252 393L251 403L248 409L241 417L239 417L236 420L229 421L229 422L189 423L189 422L179 422L179 421L172 420L162 415L160 412L158 412L149 403L149 401L145 397L144 392L142 391L142 388L140 385L139 377L138 377L138 149L139 149L139 138L140 138L140 132L142 129L142 125L147 115L153 108L153 106L163 96L165 96L172 90L184 84L194 82L194 81L209 80ZM210 82L207 84L197 85L195 87L212 86L212 85L244 85L244 84L239 84L239 83L230 84L230 83ZM310 83L309 84L297 84L297 85L321 87L319 85L315 85L314 83ZM210 89L200 90L200 91L190 93L188 95L185 95L184 97L177 99L175 102L170 104L163 111L163 113L159 116L159 118L156 120L155 124L152 127L150 137L149 137L150 363L151 363L152 298L153 298L152 290L153 290L153 237L154 237L154 233L153 233L154 231L154 148L155 148L155 142L156 142L156 138L157 138L157 134L160 129L160 126L162 122L164 121L166 115L168 114L170 108L173 106L173 104L182 102L183 100L187 100L192 97L210 95L210 94L307 94L307 95L297 95L297 96L283 97L283 98L263 98L263 99L217 99L217 100L201 99L201 100L195 100L195 101L189 102L175 111L175 113L171 116L167 124L168 126L165 129L165 132L162 133L160 140L159 140L159 145L158 145L159 267L160 267L162 218L163 218L162 214L163 214L163 191L164 191L164 170L165 170L165 140L166 140L166 134L168 134L169 131L173 127L175 127L176 124L178 124L181 120L184 120L185 118L191 115L202 113L202 111L206 112L208 110L210 111L210 110L216 110L216 109L308 108L308 109L315 109L317 111L321 111L321 112L324 112L325 114L333 116L344 127L345 132L349 136L351 134L350 122L342 108L345 109L345 111L352 117L353 121L355 121L355 119L350 114L350 112L347 110L347 108L345 108L345 106L342 105L339 101L337 101L336 99L334 99L333 97L329 95L326 95L324 93L321 93L315 90L307 90L307 89ZM359 121L358 121L358 125L359 125L361 135L362 135L362 147L363 147L363 152L364 152L364 200L365 200L365 218L366 218L366 142L365 142L364 131ZM146 129L144 132L143 144L142 144L142 270L143 270L143 148L144 148L144 138L145 138ZM366 243L364 246L363 253L360 257L358 267L361 266L363 260L365 259L364 256L365 256L365 251L366 251ZM262 277L246 281L243 287L244 288L247 287L251 282L255 280L266 279ZM271 277L270 279L277 279L277 278L321 279L321 278L326 278L326 277ZM298 282L297 283L265 283L265 284L334 284L331 282ZM252 286L248 288L246 296L247 294L248 295L250 294L249 292L250 290L251 290L250 292L254 292L255 288ZM244 348L243 348L242 382L238 390L238 397L243 391ZM167 405L166 406L169 407L170 409L178 411L178 412L182 412L182 413L201 413L201 412L196 412L190 409L181 410L171 405Z"/></svg></a>${state.address ? `<button class="btn sm ghost mono" data-acct>${short(state.address)}</button>` : `<button class="btn sm ghost" data-connect>Connect wallet</button>`}<a class="btn sm accent" href="${href('/launch')}">Launch a coin</a></div></div><div class="nav-mobile" id="navm"><button class="theme-tg" id="theme-tg-m" type="button" title="${isDev() ? 'Standard theme' : 'Dev theme'}" aria-label="Toggle theme" aria-pressed="${isDev()}"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 2.2v15.6a7.8 7.8 0 0 1 0-15.6z"/></svg></button>${NAV.map(([p,l])=>`<a href="${href(p)}" class="${path.startsWith(p)?'active':''}">${l}</a>`).join('')}<div class="nm-actions">${state.address ? `<button class="btn sm ghost mono" data-acct>${short(state.address)}</button>` : `<button class="btn sm ghost" data-connect>Connect wallet</button>`}<a class="btn sm accent" href="${href('/launch')}">Launch a coin</a></div></div>`;
+    nav.innerHTML = `<div class="wrap nav-row"><div class="pill pill-left"><a class="brand" href="${href('/')}"><span class="mark">${MARK}</span><span class="wm-text">${BRAND.name}</span></a><nav class="nav-links">${NAV.map(([p,l])=>`<a href="${href(p)}" class="${path.startsWith(p)?'active':''}">${l}</a>`).join('')}</nav><button class="btn sm ghost nav-burger" id="burger" aria-label="menu">&#9776;</button></div><div class="pill pill-right"><button class="theme-tg" id="theme-tg" type="button" title="${isDev() ? 'Standard theme' : 'Dev theme'}" aria-label="Toggle theme" aria-pressed="${isDev()}"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 2.2v15.6a7.8 7.8 0 0 1 0-15.6z"/></svg></button><a class="nav-x" href="https://x.com/gliapad" target="_blank" rel="noopener" aria-label="glia on X"><svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.9 1.2h3.7l-8.1 9.3L24 22.8h-7.5l-5.9-7.7-6.7 7.7H.2l8.7-9.9L0 1.2h7.7l5.3 7 6-7zm-1.3 19.4h2L6.6 3.3H4.4l13.2 17.3z"/></svg></a><a class="nav-x nav-pons" href="https://www.ponsfamily.com/launchpad" data-pons target="_blank" rel="noopener" aria-label="glia on pons"><svg width="17" height="17" viewBox="0 0 512 512" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M209 79L307 79L307 80L317 80L317 81L326 82L328 84L338 87L339 89L343 90L348 95L350 95L358 103L358 105L360 106L360 108L362 109L362 111L364 112L364 114L366 115L369 121L369 124L372 129L373 139L374 139L374 263L373 263L373 268L372 268L372 271L368 279L361 286L351 291L342 292L342 293L264 293L264 294L259 295L255 299L254 305L253 305L253 393L252 393L251 403L248 409L241 417L239 417L236 420L229 421L229 422L189 423L189 422L179 422L179 421L172 420L162 415L160 412L158 412L149 403L149 401L145 397L144 392L142 391L142 388L140 385L139 377L138 377L138 149L139 149L139 138L140 138L140 132L142 129L142 125L147 115L153 108L153 106L163 96L165 96L172 90L184 84L194 82L194 81L209 80ZM210 82L207 84L197 85L195 87L212 86L212 85L244 85L244 84L239 84L239 83L230 84L230 83ZM310 83L309 84L297 84L297 85L321 87L319 85L315 85L314 83ZM210 89L200 90L200 91L190 93L188 95L185 95L184 97L177 99L175 102L170 104L163 111L163 113L159 116L159 118L156 120L155 124L152 127L150 137L149 137L150 363L151 363L152 298L153 298L152 290L153 290L153 237L154 237L154 233L153 233L154 231L154 148L155 148L155 142L156 142L156 138L157 138L157 134L160 129L160 126L162 122L164 121L166 115L168 114L170 108L173 106L173 104L182 102L183 100L187 100L192 97L210 95L210 94L307 94L307 95L297 95L297 96L283 97L283 98L263 98L263 99L217 99L217 100L201 99L201 100L195 100L195 101L189 102L175 111L175 113L171 116L167 124L168 126L165 129L165 132L162 133L160 140L159 140L159 145L158 145L159 267L160 267L162 218L163 218L162 214L163 214L163 191L164 191L164 170L165 170L165 140L166 140L166 134L168 134L169 131L173 127L175 127L176 124L178 124L181 120L184 120L185 118L191 115L202 113L202 111L206 112L208 110L210 111L210 110L216 110L216 109L308 108L308 109L315 109L317 111L321 111L321 112L324 112L325 114L333 116L344 127L345 132L349 136L351 134L350 122L342 108L345 109L345 111L352 117L353 121L355 121L355 119L350 114L350 112L347 110L347 108L345 108L345 106L342 105L339 101L337 101L336 99L334 99L333 97L329 95L326 95L324 93L321 93L315 90L307 90L307 89ZM359 121L358 121L358 125L359 125L361 135L362 135L362 147L363 147L363 152L364 152L364 200L365 200L365 218L366 218L366 142L365 142L364 131ZM146 129L144 132L143 144L142 144L142 270L143 270L143 148L144 148L144 138L145 138ZM366 243L364 246L363 253L360 257L358 267L361 266L363 260L365 259L364 256L365 256L365 251L366 251ZM262 277L246 281L243 287L244 288L247 287L251 282L255 280L266 279ZM271 277L270 279L277 279L277 278L321 279L321 278L326 278L326 277ZM298 282L297 283L265 283L265 284L334 284L331 282ZM252 286L248 288L246 296L247 294L248 295L250 294L249 292L250 290L251 290L250 292L254 292L255 288ZM244 348L243 348L242 382L238 390L238 397L243 391ZM167 405L166 406L169 407L170 409L178 411L178 412L182 412L182 413L201 413L201 412L196 412L190 409L181 410L171 405Z"/></svg></a>${state.address ? `<button class="btn sm ghost mono" data-acct>${short(state.address)}</button>` : `<button class="btn sm ghost" data-connect>Connect wallet</button>`}<a class="btn sm accent" href="${href('/launch')}">Launch a coin</a></div></div><div class="nav-mobile" id="navm"><button class="theme-tg" id="theme-tg-m" type="button" title="${isDev() ? 'Standard theme' : 'Dev theme'}" aria-label="Toggle theme" aria-pressed="${isDev()}"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 2.2v15.6a7.8 7.8 0 0 1 0-15.6z"/></svg></button>${NAV.map(([p,l])=>`<a href="${href(p)}" class="${path.startsWith(p)?'active':''}">${l}</a>`).join('')}<div class="nm-actions">${state.address ? `<button class="btn sm ghost mono" data-acct>${short(state.address)}</button>` : `<button class="btn sm ghost" data-connect>Connect wallet</button>`}<a class="btn sm accent" href="${href('/launch')}">Launch a coin</a></div></div>`;
     const stuck = () => { if (window.scrollY > 8) nav.setAttribute('data-stuck',''); else nav.removeAttribute('data-stuck'); };
     if (!nav.dataset.scrollBound) { nav.dataset.scrollBound = '1'; addEventListener('scroll', stuck, { passive: true }); }
     stuck();
@@ -292,7 +292,7 @@ window.AXON = (() => {
       e.preventDefault(); pg.classList.add('leaving'); setTimeout(() => { location.href = u.href; }, 190);
     }); }
     for (const b of document.querySelectorAll('[data-connect]')) b.addEventListener('click', () => openWalletModal().catch(e => e.message !== 'Cancelled.' && toast(e.message)));
-    for (const b of document.querySelectorAll('[data-acct]')) b.addEventListener('click', () => { if (confirm('Disconnect this wallet from the page?')) { state.provider = null; state.address = null; session = null; localStorage.removeItem('axon.wallet'); api('auth/logout', {}).catch(()=>{}); renderNav(); } });
+    for (const b of document.querySelectorAll('[data-acct]')) b.addEventListener('click', () => { if (confirm('Disconnect this wallet from the page?')) { state.provider = null; state.address = null; session = null; localStorage.removeItem('glia.wallet'); api('auth/logout', {}).catch(()=>{}); renderNav(); } });
     const burger = $('#burger'), navm = $('#navm');
     if (burger && navm) {
       const place = () => { const r = burger.getBoundingClientRect(); navm.style.top = (r.bottom + 8) + 'px'; navm.style.right = Math.max(12, innerWidth - r.right) + 'px'; };
@@ -306,7 +306,7 @@ window.AXON = (() => {
       m.id = 'mit-modal';
       m.style.cssText = 'display:none';
       m.className = 'modal';
-      m.innerHTML = '<div class="sheet" style="max-width:540px;width:100%;padding:2rem 2.5rem;border-radius:24px;background:var(--panel-a);box-shadow:0 24px 60px -10px rgba(11,26,51,.18);position:relative"><button onclick="document.getElementById(\'mit-modal\').style.display=\'none\'" style="position:absolute;top:1rem;right:1rem;background:none;border:none;cursor:pointer;font-size:20px;color:#666;line-height:1" aria-label="Close">&times;</button><h2 style="margin:0 0 1.2rem;font-family:var(--head);font-size:1.3rem;font-weight:700">MIT License</h2><pre style="white-space:pre-wrap;word-break:break-word;font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--ink);margin:0">Copyright (c) 2026 Axon\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</pre></div>';
+      m.innerHTML = '<div class="sheet" style="max-width:540px;width:100%;padding:2rem 2.5rem;border-radius:24px;background:var(--panel-a);box-shadow:0 24px 60px -10px rgba(11,26,51,.18);position:relative"><button onclick="document.getElementById(\'mit-modal\').style.display=\'none\'" style="position:absolute;top:1rem;right:1rem;background:none;border:none;cursor:pointer;font-size:20px;color:#666;line-height:1" aria-label="Close">&times;</button><h2 style="margin:0 0 1.2rem;font-family:var(--head);font-size:1.3rem;font-weight:700">MIT License</h2><pre style="white-space:pre-wrap;word-break:break-word;font-family:var(--mono);font-size:13px;line-height:1.7;color:var(--ink);margin:0">Copyright (c) 2026 Glia\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</pre></div>';
       m.addEventListener('click', e => { if (e.target === m) m.style.display = 'none'; });
       document.body.appendChild(m);
     }
@@ -320,18 +320,18 @@ window.AXON = (() => {
       v.play().catch(() => {});
     }
     document.querySelectorAll('.btn.cta .mark:empty').forEach(m => m.innerHTML = MARK);
-    const f = $('#footer'); if (f) f.innerHTML = `<div class="wrap"><div class="fgrid"><div><a class="brand" href="${href('/')}"><span class="mark">${MARK}</span>${BRAND.name}</a><p class="ftxt">Every trade fires a thought. Tokens on pons v2, Robinhood Chain. Inference through OpenRouter.</p></div><div><p class="eyebrow">Product</p><div class="flinks"><a href="${href('/launch')}">Launch a coin</a><a href="${href('/explore')}">Markets</a><a href="${href('/live')}">Live</a><a href="${href('/explore')}?view=compare">Compare</a><a href="${href('/leaderboard')}">Leaderboards</a></div></div><div><p class="eyebrow">Under the hood</p><div class="flinks"><a href="${href('/article')}">What is axon?</a><a href="${href('/docs')}">Notes</a><a href="${href('/takes')}">Agora</a><a href="${href('/offspring')}">Offspring</a><a href="${CHAIN.explorer}" target="_blank" rel="noopener">Explorer</a></div></div><div><p class="eyebrow">Socials</p><div class="flinks"><a href="https://x.com/axonpad" target="_blank" rel="noopener" class="f-x"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-label="X" style="vertical-align:middle;margin-right:4px"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>@axonpad</a></div></div></div><div class="fbottom"><span>&copy; ${new Date().getFullYear()} ${BRAND.display}.</span><span class="mono"><a href="#" id="f-mit" onclick="document.getElementById('mit-modal').style.display='grid';return false">License</a> · pons v2 · Robinhood Chain</span></div></div>`;
+    const f = $('#footer'); if (f) f.innerHTML = `<div class="wrap"><div class="fgrid"><div><a class="brand" href="${href('/')}"><span class="mark">${MARK}</span>${BRAND.name}</a><p class="ftxt">Every trade fires a thought. Tokens on pons v2, Robinhood Chain. Inference through OpenRouter.</p></div><div><p class="eyebrow">Product</p><div class="flinks"><a href="${href('/launch')}">Launch a coin</a><a href="${href('/explore')}">Markets</a><a href="${href('/live')}">Live</a><a href="${href('/explore')}?view=compare">Compare</a><a href="${href('/leaderboard')}">Leaderboards</a></div></div><div><p class="eyebrow">Under the hood</p><div class="flinks"><a href="${href('/article')}">What is glia?</a><a href="${href('/docs')}">Notes</a><a href="${href('/takes')}">Agora</a><a href="${href('/offspring')}">Offspring</a><a href="${CHAIN.explorer}" target="_blank" rel="noopener">Explorer</a></div></div><div><p class="eyebrow">Socials</p><div class="flinks"><a href="https://x.com/gliapad" target="_blank" rel="noopener" class="f-x"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-label="X" style="vertical-align:middle;margin-right:4px"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>@gliapad</a></div></div></div><div class="fbottom"><span>&copy; ${new Date().getFullYear()} ${BRAND.display}.</span><span class="mono"><a href="#" id="f-mit" onclick="document.getElementById('mit-modal').style.display='grid';return false">License</a> · pons v2 · Robinhood Chain</span></div></div>`;
   }
   async function autoReconnect() {
-    const want = localStorage.getItem('axon.wallet'); if (!want) return;
+    const want = localStorage.getItem('glia.wallet'); if (!want) return;
     await new Promise(r => setTimeout(r, 150));
     const p = providers().find(w => w.info.name === want); if (!p) return;
-    try { const accts = await p.provider.request({ method:'eth_accounts' }); if (accts[0]) { state.provider = p.provider; state.address = accts[0]; state.chainId = await p.provider.request({ method:'eth_chainId' }); renderNav(); document.dispatchEvent(new CustomEvent('axon:wallet', { detail:{ address: accts[0] } })); } } catch {}
+    try { const accts = await p.provider.request({ method:'eth_accounts' }); if (accts[0]) { state.provider = p.provider; state.address = accts[0]; state.chainId = await p.provider.request({ method:'eth_chainId' }); renderNav(); document.dispatchEvent(new CustomEvent('glia:wallet', { detail:{ address: accts[0] } })); } } catch {}
   }
 
   /* popups: bottom right launch / trade / graduation / note feed */
   (function popups(){
-    const KEY='axon.popupsSince'; const seen=new Set(); let since=Number(localStorage.getItem(KEY)||0); if(!since){ since=Math.floor(Date.now()/1000); localStorage.setItem(KEY,String(since)); }
+    const KEY='glia.popupsSince'; const seen=new Set(); let since=Number(localStorage.getItem(KEY)||0); if(!since){ since=Math.floor(Date.now()/1000); localStorage.setItem(KEY,String(since)); }
     let stack=null;
     function box(){ if(!stack){ stack=document.createElement('div'); stack.className='pops'; document.body.appendChild(stack); } return stack; }
     function title(e){
@@ -340,7 +340,7 @@ window.AXON = (() => {
       if(e.type==='trade') return `${e.side==='sell'?'Sell':'Buy'} on ${e.symbol}${e.ethAmount?` · ${Number(e.ethAmount).toFixed(4)} ETH`:''}`;
       if(e.type==='note') return `${e.symbol} wrote today's note`;
       if(e.type==='post') return `${e.symbol} posted in the agora`;
-      return e.symbol||'axon';
+      return e.symbol||'glia';
     }
     function show(e){
       const st=box(); if(st.children.length>=3) st.firstElementChild?.remove();
@@ -437,7 +437,7 @@ window.AXON = (() => {
   // ---------- official token: reserved first slot in every market grid and table
   let _official = null;
   let _officialSync = null;
-  function official() { return _official || (_official = api('official').then(d => { _officialSync = d; return d; }).catch(() => { const d = { name: 'Axon', symbol: 'AXON', pairedWith: 'Axon', token: null, live: false }; _officialSync = d; return d; })); }
+  function official() { return _official || (_official = api('official').then(d => { _officialSync = d; return d; }).catch(() => { const d = { name: 'Glia', symbol: 'GLIA', pairedWith: 'Glia', token: null, live: false }; _officialSync = d; return d; })); }
   function officialLogo() { return `<span class="official-logo">${MARK}</span>`; }
   function officialCard(o) {
     const inner = `<div class="mkt-head">${officialLogo()}<div class="mkt-name"><span class="n">${esc(o.name)}</span><span class="chip">${esc(o.symbol)}</span></div></div>
@@ -449,7 +449,7 @@ window.AXON = (() => {
   }
   function officialRow(cols) {
     // cols = total column count of the table; first cell is the token cell, second is model/backs, remaining are filled with n/a except the last which gets the chip
-    const o = _officialSync || { name: 'Axon', symbol: 'AXON', pairedWith: 'Axon' };
+    const o = _officialSync || { name: 'Glia', symbol: 'GLIA', pairedWith: 'Glia' };
     const cells = [`<td><div class="tok">${officialLogo()}<span><span class="n">${esc(o.name)}</span><br><span class="s">${esc(o.symbol)} · paired to ${esc(o.pairedWith)}</span></span></div></td>`, `<td><span class="chip official">Official</span></td>`];
     for (let i = 2; i < cols - 1; i++) cells.push('<td class="num faint">n/a</td>');
     cells.push('<td><span class="chip">Soon</span></td>');

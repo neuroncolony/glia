@@ -1,11 +1,11 @@
 # Backend spec: real curve data, on-chain trades, candles, logos
 
-Project: /data/workspace/output/axon. Python 3.11, stdlib + eth_abi + eth_utils. Files: server/chain.py, server/pool.py, server/server.py, server/store.py. Read all four fully first.
+Project: /data/workspace/output/glia. Python 3.11, stdlib + eth_abi + eth_utils. Files: server/chain.py, server/pool.py, server/server.py, server/store.py. Read all four fully first.
 
 ## Verified chain facts (chain 4663, use chain.rpc / chain.call / chain.calldata helpers)
 - The curve does NOT have ethReserve(), totalRaised(), buy(uint256) or sell(uint256,uint256). Current curve_state, quote and trade_tx are broken (price null).
 - Curve has: getReserves() -> (uint256 ethReserve, uint256 tokenReserve) [virtual reserves, wei scale; fresh curve = 1680000000000000000, 1e27], tokenReserve(), graduated() -> bool, graduationThreshold() -> uint256 (4.2e18), feeBps() (100), creatorTaxBps() (200), token(), pairToken(), feeEscrow(), sweepFees(uint256).
-- Trading: buy(uint256 ethAmount, uint256 minTokensOut, address to) payable; ethAmount MUST equal msg.value; returns uint256 tokensOut. eth_call with from + value works as a quote (1e15 wei on the fresh AXON curve 0x76C7d47bb96Cf78eCf99c5711A0524EC7Ff1D215 returned 577047775986483994360399). sell(uint256 tokenAmount, uint256 minEthOut, address to); seller must approve the curve for tokenAmount first.
+- Trading: buy(uint256 ethAmount, uint256 minTokensOut, address to) payable; ethAmount MUST equal msg.value; returns uint256 tokensOut. eth_call with from + value works as a quote (1e15 wei on the fresh GLIA curve 0x76C7d47bb96Cf78eCf99c5711A0524EC7Ff1D215 returned 577047775986483994360399). sell(uint256 tokenAmount, uint256 minEthOut, address to); seller must approve the curve for tokenAmount first.
 - Constant product on virtual reserves, total fee = feeBps + creatorTaxBps = 300 bps taken from the ETH side.
   buy: ethNet = ethIn*(10000-300)//10000; out = tokenReserve - ethReserve*tokenReserve//(ethReserve+ethNet).
   sell: ethGross = ethReserve - ethReserve*tokenReserve//(tokenReserve+tokensIn); ethOut = ethGross*(10000-300)//10000.
@@ -24,7 +24,7 @@ Project: /data/workspace/output/axon. Python 3.11, stdlib + eth_abi + eth_utils.
 7. pool.py enrich(): add logoUrl = '/api/token/<token>/logo', keep logo raw, status from real bool, graduation = balanceWei/threshold, add volume24hEth, lastTradeAt.
 8. pool.py: trades(token=None, limit=100) newest first (without token include token+symbol per item); candles(token, interval_s=300, limit=200): buckets floor(at/interval), each {t,o,h,l,c,vEth}; no trades -> one candle at current priceEth, t=now. Top level also priceEth, ethUsd.
 9. server.py api_get: 'trades' (q token, limit), 'candles' (q token, interval, limit), 'token/<addr>/logo' -> 302 to rec logo if set else 200 image/svg+xml avatar with Cache-Control public, max-age=3600. Match the logo route before 'token/<addr>'. Write a small raw-response helper if send() only does JSON.
-10. Sanity run: `cd /data/workspace/output/axon && set -a && source /data/workspace/.env && set +a && PORT=8123 python3 server/server.py &` (check how the port is read; adapt). Wait for the indexer, then curl:
+10. Sanity run: `cd /data/workspace/output/glia && set -a && source /data/workspace/.env && set +a && PORT=8123 python3 server/server.py &` (check how the port is read; adapt). Wait for the indexer, then curl:
    - /api/token/0x39966D78fb8687686ffAD078731903DAF1e9F816 -> priceEth about 1.68e-9, marketCapEth about 1.68, status 'Curve', graduation 0.0, logoUrl present
    - /api/token/0x39966D78fb8687686ffAD078731903DAF1e9F816/logo -> SVG
    - /api/candles?token=0x39966D78fb8687686ffAD078731903DAF1e9F816 -> one candle

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('axon.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('glia.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{BRAND}} · Launch</title><meta name="description" content="{{DESCRIPTION}}">
 <link rel="stylesheet" href="static/styles.css"><script src="static/shell.js" defer></script></head>
 <body><header class="nav" id="nav"></header>
@@ -55,7 +55,7 @@
 <footer class="footer" id="footer"></footer>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-  const { api, esc, fmtEth, href, short, state, ensureChain, sendTx, toast } = AXON;
+  const { api, esc, fmtEth, href, short, state, ensureChain, sendTx, toast } = GLIA;
   const notice = document.getElementById('notice');
   const submit = document.getElementById('submit');
   const showErr = m => { notice.innerHTML = `<div class="notice bad">${esc(m)}</div>`; };
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   /* cropper: pan (drag), zoom (wheel, pinch, slider), rotate (90 steps + fine), flip, fit, fill, reset. Exports 512 px PNG. */
 
-  /* the axon footprint, drawn small in the bottom right of any logo we mint */
+  /* the glia footprint, drawn small in the bottom right of any logo we mint */
   function stampMark(c, size) {
     const b = size * 0.219, m = size * 0.047, cx = size - m - b / 2, cy = cx, R = b / 2;
     c.save();
@@ -177,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     status = s;
     document.getElementById('w-fee').textContent = `${s.launchFeeEth} ETH`;
     const t = document.getElementById('w-treasury');
-    t.innerHTML = `(<a href="${AXON.CHAIN.explorer}/address/${esc(s.treasury)}" target="_blank" rel="noopener">${short(s.treasury)}</a>)`;
+    t.innerHTML = `(<a href="${GLIA.CHAIN.explorer}/address/${esc(s.treasury)}" target="_blank" rel="noopener">${short(s.treasury)}</a>)`;
   }).catch(() => { document.getElementById('w-fee').textContent = 'unknown'; });
   api('models').then(({ models }) => {
     const sel = document.getElementById('f-model');
@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const prep = await api('launch/prepare', { name, symbol, description, logo: logoUrl, model, website, twitter, telegram });
       const { hash } = await sendTx(prep.tx, prep.tx.to);
       submit.textContent = 'Sign to register…';
-      try { await AXON.login(); } catch (e) { AXON.toast('Sign the message so we can register your token.'); }
+      try { await GLIA.login(); } catch (e) { GLIA.toast('Sign the message so we can register your token.'); }
       let done = null;
       for (let i = 0; i <= 6; i++) {
         try { done = await api('launch/confirm', { tx: hash, model, logo: logoUrl, description }); break; }

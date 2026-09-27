@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('axon.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('glia.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{BRAND}} · Live</title><meta name="description" content="{{DESCRIPTION}}">
 <link rel="stylesheet" href="static/styles.css"><script src="static/shell.js" defer></script></head>
 <body><header class="nav" id="nav"></header>
@@ -37,17 +37,17 @@
 <footer class="footer" id="footer"></footer>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-  const { api, esc, fmtUsd, ago, href, short, sendTx } = AXON;
+  const { api, esc, fmtUsd, ago, href, short, sendTx } = GLIA;
   const usd = v => v == null ? 'n/a' : fmtUsd(v);
-  const LOGO = t => AXON.href(t.logoUrl || ('/api/token/' + t.token + '/logo'));
-  const logoImg = t => `<img class="logo" src="${esc(LOGO(t))}" alt="" loading="lazy" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='${esc(AXON.href('/api/token/' + t.token + '/logo'))}'}">`;
+  const LOGO = t => GLIA.href(t.logoUrl || ('/api/token/' + t.token + '/logo'));
+  const logoImg = t => `<img class="logo" src="${esc(LOGO(t))}" alt="" loading="lazy" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='${esc(GLIA.href('/api/token/' + t.token + '/logo'))}'}">`;
   const compact = n => n >= 1e9 ? (n / 1e9).toFixed(2) + 'B' : n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : Number(n).toFixed(0);
   let filter = '';
   let events = [];
   const seen = new Set();
   const key = e => e.tx + '|' + e.type + '|' + e.at;
   function row(e) {
-    const link = e.tx ? `<a href="${AXON.CHAIN.explorer}/tx/${esc(e.tx)}" target="_blank" rel="noopener">tx ↗</a>` : '';
+    const link = e.tx ? `<a href="${GLIA.CHAIN.explorer}/tx/${esc(e.tx)}" target="_blank" rel="noopener">tx ↗</a>` : '';
     const eth = e.ethWei != null ? Number(BigInt(e.ethWei)) / 1e18 : null;
     const tok = e.tokenWei != null ? Number(BigInt(e.tokenWei)) / 1e18 : null;
     const what = e.type === 'take' ? 'said'
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       : e.type === 'sell' ? `sold ${tok == null ? 'n/a' : compact(tok)} tokens for ${eth == null ? 'n/a' : eth.toFixed(4)} ETH`
       : e.type === 'trade' ? `${esc(e.side || 'trade')} · ${eth == null ? 'n/a' : eth.toFixed(4)} ETH`
       : 'launched';
-    return `<div class="feed-item" data-k="${esc(key(e))}"><div class="t">${ago(e.at)}</div><div><div class="who">${logoImg(e)}<b><a href="${href('/token/' + e.token)}">$${esc(e.symbol || short(e.token))}</a></b><span>${what}</span>${e.by ? `<a class="mono faint" href="${AXON.CHAIN.explorer}/address/${e.by}" target="_blank" rel="noopener">${short(e.by)} ↗</a>` : ''}${link}</div>${e.body ? `<div class="body">${esc(e.body)}</div>` : ''}</div></div>`;
+    return `<div class="feed-item" data-k="${esc(key(e))}"><div class="t">${ago(e.at)}</div><div><div class="who">${logoImg(e)}<b><a href="${href('/token/' + e.token)}">$${esc(e.symbol || short(e.token))}</a></b><span>${what}</span>${e.by ? `<a class="mono faint" href="${GLIA.CHAIN.explorer}/address/${e.by}" target="_blank" rel="noopener">${short(e.by)} ↗</a>` : ''}${link}</div>${e.body ? `<div class="body">${esc(e.body)}</div>` : ''}</div></div>`;
   }
   function renderFeed() {
     const f = document.getElementById('feed');
@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     treasury = (s.treasury || '').toLowerCase() || null;
     const link = document.getElementById('treasury-link');
     link.textContent = shortAddr(s.treasury);
-    link.href = AXON.CHAIN.explorer + '/address/' + s.treasury;
+    link.href = GLIA.CHAIN.explorer + '/address/' + s.treasury;
     const c = s.claimableEth;
     const has = c != null && Number(c) > 0;
     claimableLine.textContent = 'Claimable now: ' + (c == null ? 'unknown' : Number(c).toFixed(4) + ' ETH');
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   const treasuryCard = document.getElementById('treasury-card');
   function syncCardVisibility() {
-    const addr = (AXON.state.address || '').toLowerCase();
+    const addr = (GLIA.state.address || '').toLowerCase();
     const owner = !!treasury && addr === treasury;
     treasuryCard.style.display = owner ? '' : 'none';
     if (owner) fillOwner();
@@ -122,17 +122,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   function checkWallet() { syncCardVisibility(); }
   claimBtn.addEventListener('click', async () => {
     try {
-      if (!AXON.state.address) { await AXON.openWalletModal(); return; }
-      if ((AXON.state.address || '').toLowerCase() !== treasury) { AXON.toast('Connect the treasury wallet (' + shortAddr(treasury) + ') to claim.'); return; }
+      if (!GLIA.state.address) { await GLIA.openWalletModal(); return; }
+      if ((GLIA.state.address || '').toLowerCase() !== treasury) { GLIA.toast('Connect the treasury wallet (' + shortAddr(treasury) + ') to claim.'); return; }
       claimBtn.disabled = true;
-      const res = await api('treasury/claim?from=' + encodeURIComponent(AXON.state.address));
+      const res = await api('treasury/claim?from=' + encodeURIComponent(GLIA.state.address));
       const { hash } = await sendTx(res.tx, res.tx.to);
-      AXON.toast('Claim sent: ' + short(hash));
+      GLIA.toast('Claim sent: ' + short(hash));
       claimBtn.textContent = 'Claim sent. Refreshing…';
       setTimeout(async () => { try { fillTreasury(await api('status')); } catch {} }, 8000);
-    } catch (e) { AXON.toast(e.message); claimBtn.disabled = false; }
+    } catch (e) { GLIA.toast(e.message); claimBtn.disabled = false; }
   });
-  document.addEventListener('axon:wallet', checkWallet);
+  document.addEventListener('glia:wallet', checkWallet);
   async function fillOwner() {
     const box = document.getElementById('owner-box'); if (!box) return;
     try {

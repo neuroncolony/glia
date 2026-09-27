@@ -1,4 +1,4 @@
-"""axon holders indexer and popup feed helpers.
+"""glia holders indexer and popup feed helpers.
 Feature 6: index ERC20 Transfer logs per token in 5000 block chunks into the 'holders' dict store.
 Feature 7: fees accrued card data from the token's indexed trades.
 Feature 11: cheap recent events list for the live popup (no chain reads).
@@ -96,7 +96,7 @@ def recent_events(events_rows, since, TOKENS):
     for r in events_rows or []:
         if (r.get('type') not in EVENT_TYPES) or not (r.get('at', 0) > (since or 0)): continue
         rec = TOKENS.get((r.get('token') or '').lower())
-        if not rec: continue  # only tokens launched through axon
+        if not rec: continue  # only tokens launched through glia
         out.append({'type': r.get('type'), 'token': r.get('token'), 'symbol': r.get('symbol') or rec.get('symbol'),
                     'logoUrl': '/api/token/' + (r.get('token') or '') + '/logo',
                     'name': rec.get('name'), 'model': r.get('model') or rec.get('model'),

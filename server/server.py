@@ -1,4 +1,4 @@
-"""axon web server. Static pages + JSON API. Read-only chain access, unsigned tx builders, OpenRouter chat billed to the compute pool.
+"""glia web server. Static pages + JSON API. Read-only chain access, unsigned tx builders, OpenRouter chat billed to the compute pool.
 Run: python3 server/server.py  (PORT env, default 8791)"""
 import logos
 import json, os, sys, re, secrets, hashlib, threading, time, mimetypes
@@ -20,7 +20,7 @@ from eth_account import Account
 
 PUBLIC = ROOT / 'public'
 BRAND = json.loads((ROOT / 'brand.json').read_text())
-COOKIE = 'axon_session'
+COOKIE = 'glia_session'
 _limits = defaultdict(deque); _llock = threading.Lock()
 def rate_limit(key, maximum, window=60):
     now = time.monotonic()
@@ -46,7 +46,7 @@ PAGES = {'': 'index.html', 'explore': 'explore.html', 'live': 'live.html', 'laun
          'leaderboard': 'leaderboard.html', 'scoreboard': 'scoreboard.html', 'offspring': 'offspring.html', 'takes': 'takes.html', 'token': 'token.html', 'agora': 'agora.html', 'note': 'note.html'}
 
 class H(BaseHTTPRequestHandler):
-    server_version = 'axon/1'
+    server_version = 'glia/1'
     def log_message(self, *a): pass
     def send(self, code, data=None, headers=None, body=None, ctype='application/json'):
         payload = body if body is not None else json.dumps(data, default=str).encode()
@@ -117,7 +117,7 @@ class H(BaseHTTPRequestHandler):
         if p == 'trades': return self.send(200, {'trades': pool.on_chain_trades(token=q.get('token'), limit=min(int(q.get('limit', 100)), 500))})
         if p == 'candles': return self.send(200, pool.candles(q.get('token', ''), interval_s=max(60, int(q.get('interval', 300))), limit=min(int(q.get('limit', 200)), 500)))
         if p.startswith('token/') and p.endswith('/logo'):
-            # the official token wears the axon mark itself, shipped with the site, no outside host involved
+            # the official token wears the glia mark itself, shipped with the site, no outside host involved
             if p[6:-5].lower() == (official.official()['token'] or '') and (PUBLIC / 'official-logo.png').is_file():
                 return self.send(200, body=(PUBLIC / 'official-logo.png').read_bytes(), ctype='image/png', headers={'Cache-Control': 'public, max-age=86400'})
             rec = pool.TOKENS.get(p[6:-5].lower())
@@ -287,5 +287,5 @@ class H(BaseHTTPRequestHandler):
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8791))
     pool.start_indexer()
-    print(f'axon on :{port}', flush=True)
+    print(f'glia on :{port}', flush=True)
     ThreadingHTTPServer(('0.0.0.0', port), H).serve_forever()

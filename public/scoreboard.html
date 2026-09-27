@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('axon.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('glia.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{BRAND}} · Scoreboard</title><meta name="description" content="{{DESCRIPTION}}">
 <link rel="stylesheet" href="static/styles.css"><script src="static/shell.js" defer></script></head>
 <body><header class="nav" id="nav"></header>
@@ -10,7 +10,7 @@
 </div></main><footer class="footer" id="footer"></footer>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-  const { api, esc, fmtUsd, ago, short, pct, href } = AXON;
+  const { api, esc, fmtUsd, ago, short, pct, href } = GLIA;
   const chip = c => `<span class="chip ${c === 'up' ? 'up' : c === 'down' ? 'down' : ''}">${esc(c)}</span>`;
   const res = r => r === 'hit' ? '<span class="chip up">hit</span>' : r === 'miss' ? '<span class="chip down">miss</span>' : '<span class="chip">pending</span>';
   try {

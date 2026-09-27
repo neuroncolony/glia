@@ -1,7 +1,7 @@
-# Axon reference site: structural recon report
+# Glia reference site: structural recon report
 
 Generated from saved HTML snapshots and compiled Tailwind CSS in
-`/data/workspace/output/axon/recon/`. No network requests were made.
+`/data/workspace/output/glia/recon/`. No network requests were made.
 Text is truncated to 120 chars. DOM outlines are capped at 400 lines per page.
 
 ## Page: home.html

@@ -1,12 +1,12 @@
-# axon page build spec (shared by all page delegations)
+# glia page build spec (shared by all page delegations)
 
-Project root: /data/workspace/output/axon. Static pages live in `public/`. Server: `server/server.py` (Python, no framework). Read `public/index.html` FIRST and copy its exact skeleton, script loading, and coding style. Read `public/styles.css` for every available class (use those classes; add page-specific CSS only inside a `<style>` block in the page, keep it small). Read `public/shell.js` for the `AXON` helper object.
+Project root: /data/workspace/output/glia. Static pages live in `public/`. Server: `server/server.py` (Python, no framework). Read `public/index.html` FIRST and copy its exact skeleton, script loading, and coding style. Read `public/styles.css` for every available class (use those classes; add page-specific CSS only inside a `<style>` block in the page, keep it small). Read `public/shell.js` for the `GLIA` helper object.
 
 ## Skeleton every page must use (copy from index.html)
 - `<!DOCTYPE html><html lang="en">`, `<head>` with `<title>{{BRAND}} · Page name</title>`, meta viewport, `<link rel="stylesheet" href="static/styles.css">`, `<script src="static/shell.js" defer></script>`.
 - `<body><header class="nav" id="nav"></header><main class="page"><div class="wrap"> ... </div></main><footer class="footer" id="footer"></footer><script>...</script></body>`.
-- All internal links are RELATIVE (no leading slash): `href="explore"`, `href="launch"`, `href="token/0x..."`. In JS use `AXON.href('/explore')`. Static assets: `static/...`. API calls: `AXON.api('tokens?sort=new')` (GET) or `AXON.api('chat', {model, messages})` (POST). The server strips a `/preview/<id>` prefix, so never hardcode absolute paths.
-- Wrap page JS in `document.addEventListener('DOMContentLoaded', async () => { const { api, esc, fmtUsd, fmtEth, toWei, fromWei, ago, short, pct, toast, href, state, login, me, ensureChain, sendTx, openWalletModal } = AXON; ... })`.
+- All internal links are RELATIVE (no leading slash): `href="explore"`, `href="launch"`, `href="token/0x..."`. In JS use `GLIA.href('/explore')`. Static assets: `static/...`. API calls: `GLIA.api('tokens?sort=new')` (GET) or `GLIA.api('chat', {model, messages})` (POST). The server strips a `/preview/<id>` prefix, so never hardcode absolute paths.
+- Wrap page JS in `document.addEventListener('DOMContentLoaded', async () => { const { api, esc, fmtUsd, fmtEth, toWei, fromWei, ago, short, pct, toast, href, state, login, me, ensureChain, sendTx, openWalletModal } = GLIA; ... })`.
 - Always escape user/API strings with `esc()`. Numbers: `fmtUsd(n)` for USD (handles tiny prices as $0.0₅443), `pct(x)` for 0..1 fractions, `ago(unixSeconds)` for ages, `short(address)`.
 - Placeholders `{{BRAND}}`, `{{BRAND_DISPLAY}}`, `{{DESCRIPTION}}` are replaced server-side; use them instead of a hardcoded brand name.
 - Empty states use `<div class="empty">...</div>`. Loading rows show a faint "Reading the chain…" text. Errors show `<div class="notice error">`.
@@ -32,9 +32,9 @@ Light theme. White background, navy `--navy #0f2340` headings, `--ink` text, `--
 - POST `trade/record {token, side, ethWei, tx}` after a confirmed trade (records the trade for volume/feed)
 - POST `launch/prepare {name, symbol, description, logo, model, website, twitter, telegram}` → `{tx:{to,data,value,chainId}, creatorFeeRecipient, creatorTaxBps, model}`
 - POST `launch/confirm {tx, model, logo, description}` → `{ok, token:T}` (call after the wallet confirms; retry on "no launch event yet")
-- Auth: `AXON.login()` (wallet signs a message, sets cookie, returns `{address, csrf, hasLaunched, launches:[{token,symbol,model}], spentUsd, chatEnabled}`); `AXON.me()` returns the same or null. `AXON.state.address` is the connected wallet (may be set without a session). Listen for `document.addEventListener('axon:wallet', ...)` when the wallet connects.
+- Auth: `GLIA.login()` (wallet signs a message, sets cookie, returns `{address, csrf, hasLaunched, launches:[{token,symbol,model}], spentUsd, chatEnabled}`); `GLIA.me()` returns the same or null. `GLIA.state.address` is the connected wallet (may be set without a session). Listen for `document.addEventListener('glia:wallet', ...)` when the wallet connects.
 - POST `chat {model, messages:[{role:"user"|"assistant", content}]}` (needs login) → `{reply, usage:{prompt_tokens, completion_tokens}, costUsd, poolAvailableUsd}`. `chat/history?model=` → `{messages:[{model,q,a,costUsd,at}]}`.
-- `keys` (needs login) → `{keys:[{id,label,prefix,createdAt,calls}]}`. POST `keys {label}` → `{key (shown once), record}`. POST `keys {revoke:id}` → `{keys}`. Public endpoint for key holders: POST `api/v1/chat/completions` with `Authorization: Bearer axon_...`, OpenAI-compatible body `{model, messages}`.
+- `keys` (needs login) → `{keys:[{id,label,prefix,createdAt,calls}]}`. POST `keys {label}` → `{key (shown once), record}`. POST `keys {revoke:id}` → `{keys}`. Public endpoint for key holders: POST `api/v1/chat/completions` with `Authorization: Bearer glia_...`, OpenAI-compatible body `{model, messages}`.
 - Wallet tx flow: `const prep = await api('launch/prepare', form); const {hash} = await sendTx(prep.tx, prep.tx.to); then api('launch/confirm', {tx: hash, ...})`. For trades: expected `to` is the curve (or token for approval).
 
 ## Chain facts for copy

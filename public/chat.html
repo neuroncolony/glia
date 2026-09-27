@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('axon.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('glia.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{BRAND}} · Chat</title><meta name="description" content="{{DESCRIPTION}}">
 <link rel="stylesheet" href="static/styles.css"><script src="static/shell.js" defer></script>
 <style>.thread{min-height:22rem;max-height:60vh;overflow:auto;display:flex;flex-direction:column;gap:12px;padding:4px 0 16px}.msg{max-width:82%;padding:12px 16px;border-radius:20px;font-size:15px;line-height:1.5;white-space:pre-wrap;word-break:break-word}.msg.u{align-self:flex-end;background:var(--ink);color:#fff;box-shadow:var(--chip-gloss)}.msg.a{align-self:flex-start;background:var(--panel-a);box-shadow:var(--shadow)}.msg .meta{display:block;font-family:var(--mono);font-size:11px;opacity:.6;margin-top:6px}.compose{display:flex;gap:8px;align-items:flex-end}.compose textarea{flex:1;min-height:52px;resize:vertical}</style></head>
@@ -22,7 +22,7 @@
 </div></main><footer class="footer" id="footer"></footer>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-  const { api, esc, fmtUsd, ago, href, toast, state, ensureChain, login, me } = AXON;
+  const { api, esc, fmtUsd, ago, href, toast, state, ensureChain, login, me } = GLIA;
   const sel = document.getElementById('model'), th = document.getElementById('thread'), q = document.getElementById('q'), send = document.getElementById('send'), err = document.getElementById('err');
   const want = new URLSearchParams(location.search).get('model'); let msgs = [];
   const { models } = await api('models'); sel.innerHTML = models.map(m => `<option value="${esc(m.id)}" ${m.id === want ? 'selected' : ''}>${esc(m.name)} · $${m.in}/$${m.out} per 1M</option>`).join('');

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('axon.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('glia.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{BRAND}} · Markets</title><meta name="description" content="{{DESCRIPTION}}">
 <link rel="stylesheet" href="static/styles.css"><script src="static/shell.js" defer></script></head>
 <body><header class="nav" id="nav"></header>
@@ -28,12 +28,12 @@
 <footer class="footer" id="footer"></footer>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-  const { api, esc, fmtUsd, ago, pct, href, short, official, officialCard, officialRow } = AXON;
+  const { api, esc, fmtUsd, ago, pct, href, short, official, officialCard, officialRow } = GLIA;
   const usd = v => v == null ? 'n/a' : fmtUsd(v);
-  const LOGO = t => t.rawLogoUrl || AXON.href('/api/token/' + t.token + '/logo');
-  const logoImg = t => { const fb = esc(AXON.href('/api/token/'+t.token+'/logo')); return `<img class="logo" src="${esc(LOGO(t))}" alt="" loading="lazy" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='${fb}'}">`; };
+  const LOGO = t => t.rawLogoUrl || GLIA.href('/api/token/' + t.token + '/logo');
+  const logoImg = t => { const fb = esc(GLIA.href('/api/token/'+t.token+'/logo')); return `<img class="logo" src="${esc(LOGO(t))}" alt="" loading="lazy" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='${fb}'}">`; };
   let sort = 'new', model = '', status = '';
-  let view = localStorage.getItem('axon.marketsView') === 'rows' ? 'rows' : 'cards';
+  let view = localStorage.getItem('glia.marketsView') === 'rows' ? 'rows' : 'cards';
   let tokens = [];
   api('models').then(({ models }) => {
     const sel = document.getElementById('f-model');
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }).catch(() => {});
   function card(t) {
     const off = t.official ? ' official-slot' : '';
-    const pair = t.official ? `<span class="chip official">Paired to Axon</span>` : (t.modelName ? `<span class="chip mint">${esc(t.modelName)}</span>` : '<span class="chip">no model</span>');
+    const pair = t.official ? `<span class="chip official">Paired to Glia</span>` : (t.modelName ? `<span class="chip mint">${esc(t.modelName)}</span>` : '<span class="chip">no model</span>');
     return `<a class="mkt-card${off}" href="${href('/token/' + t.token)}">
       <div class="mkt-head">${logoImg(t)}<div class="mkt-name"><span class="n">${esc(t.name || short(t.token))}</span><span class="chip">${esc(t.symbol || '?')}</span></div></div>
       <div class="mkt-sub"><span class="mono">${usd(t.marketCapUsd)}</span>${pair}</div>
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     cards.innerHTML = tokens.map(card).join('');
-    document.getElementById('rows').innerHTML = (!o.live ? officialRow(8) : '') + tokens.map(t => `<tr${t.official ? ' class="official-row"' : ''} onclick="location.href='${href('/token/' + t.token)}'" style="cursor:pointer"><td><div class="tok">${logoImg(t)}<span><span class="n">${esc(t.name || short(t.token))}</span><br><span class="s">${esc(t.symbol || '?')}${t.official ? '' : ' · ETH'}</span></span></div></td><td>${t.official ? '<span class="chip official">Paired to Axon</span>' : esc(t.modelName || 'n/a')}</td><td class="num">${usd(t.priceUsd)}</td><td class="num">${usd(t.marketCapUsd)}</td><td class="num">${usd(t.volume24hUsd)}</td><td><span class="bar"><i style="width:${Math.round((t.graduation || 0) * 100)}%"></i></span>${pct(t.graduation)}</td><td class="num">${ago(t.launchedAt)}</td><td><span class="chip ${t.status === 'Graduated' ? 'up' : ''}">${esc(t.status)}</span></td></tr>`).join('');
+    document.getElementById('rows').innerHTML = (!o.live ? officialRow(8) : '') + tokens.map(t => `<tr${t.official ? ' class="official-row"' : ''} onclick="location.href='${href('/token/' + t.token)}'" style="cursor:pointer"><td><div class="tok">${logoImg(t)}<span><span class="n">${esc(t.name || short(t.token))}</span><br><span class="s">${esc(t.symbol || '?')}${t.official ? '' : ' · ETH'}</span></span></div></td><td>${t.official ? '<span class="chip official">Paired to Glia</span>' : esc(t.modelName || 'n/a')}</td><td class="num">${usd(t.priceUsd)}</td><td class="num">${usd(t.marketCapUsd)}</td><td class="num">${usd(t.volume24hUsd)}</td><td><span class="bar"><i style="width:${Math.round((t.graduation || 0) * 100)}%"></i></span>${pct(t.graduation)}</td><td class="num">${ago(t.launchedAt)}</td><td><span class="chip ${t.status === 'Graduated' ? 'up' : ''}">${esc(t.status)}</span></td></tr>`).join('');
   }
   function load() {
     const q = new URLSearchParams({ sort, limit: '50' });
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('view-toggle').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     view = b.id === 'view-rows' ? 'rows' : 'cards';
-    localStorage.setItem('axon.marketsView', view);
+    localStorage.setItem('glia.marketsView', view);
     render();
   });
   load();

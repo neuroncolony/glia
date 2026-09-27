@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('axon.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('glia.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{BRAND}} · Token</title><meta name="description" content="{{DESCRIPTION}}">
 <link rel="stylesheet" href="../static/styles.css"><script src="../static/shell.js" defer></script>
 <style>.thead{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap;padding:8px 0 16px}.thead .logo{width:64px;height:64px;border-radius:20px;background:var(--blue-soft);box-shadow:var(--shadow);object-fit:cover;flex:none}.thead h1{font-size:clamp(28px,3.4vw,44px);line-height:1.05}.addr{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--muted)}.kv{display:grid;grid-template-columns:1fr auto;gap:8px 16px;font-size:14px;margin:0}.kv dt{color:var(--muted)}.kv dd{margin:0;font-family:var(--mono);text-align:right;color:var(--ink)}.seg{display:inline-flex;gap:4px;padding:4px;border-radius:999px;background:var(--wash);margin-bottom:12px}.seg button{border:0;background:none;height:32px;padding:0 14px;border-radius:999px;font-family:var(--head);font-weight:500;font-size:14px;color:var(--ink-80);cursor:pointer;transition:background .4s var(--ease),color .4s var(--ease)}.seg button.on{background:var(--ink);color:#fff;box-shadow:var(--chip-gloss)}
@@ -9,12 +9,12 @@
 <footer class="footer" id="footer"></footer>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-  const { api, esc, fmtUsd, fmtEth, toWei, fromWei, ago, short, pct, toast, href, state, ensureChain, sendTx, me, activeAddress, devOn, rpcCall } = AXON;
+  const { api, esc, fmtUsd, fmtEth, toWei, fromWei, ago, short, pct, toast, href, state, ensureChain, sendTx, me, activeAddress, devOn, rpcCall } = GLIA;
   const addr = (location.pathname.split('/token/')[1] || '').split(/[/?#]/)[0];
   const root = document.getElementById('root'); const usd = v => v == null ? 'n/a' : fmtUsd(v);
-  const EXP = AXON.CHAIN.explorer;
-  const LOGO = t => AXON.href(t.logoUrl || ('/api/token/' + t.token + '/logo'));
-  const logoImg = (t, cls) => `<img class="${cls || 'logo'}" src="${esc(LOGO(t))}" alt="" loading="lazy" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='${esc(AXON.href('/api/token/' + t.token + '/logo'))}'}">`;
+  const EXP = GLIA.CHAIN.explorer;
+  const LOGO = t => GLIA.href(t.logoUrl || ('/api/token/' + t.token + '/logo'));
+  const logoImg = (t, cls) => `<img class="${cls || 'logo'}" src="${esc(LOGO(t))}" alt="" loading="lazy" onerror="if(!this.dataset.f){this.dataset.f=1;this.src='${esc(GLIA.href('/api/token/' + t.token + '/logo'))}'}">`;
   if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) { root.innerHTML = `<div class="empty">That is not a token address. <a href="${href('/explore')}">Back to markets</a></div>`; return; }
   let t; try { t = await api('token/' + addr); } catch (e) { root.innerHTML = `<div class="notice bad">${esc(e.message)}</div>`; return; }
   const cs = t.curveState || {}; const grad = t.status === 'Graduated';
@@ -25,10 +25,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const priceEthTxt = p => p == null ? 'n/a' : p < 1e-6 ? p.toExponential(2).replace('e', 'e') + ' ETH' : p.toFixed(p < 1 ? 8 : 2) + ' ETH';
   root.innerHTML = `
   <div class="thead${t.official ? ' official-slot' : ''}">${logoImg(t)}
-    <div style="flex:1;min-width:16rem"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h1>${esc(t.name || short(t.token))}</h1><span class="chip ${grad ? 'up' : ''}">${esc(t.status)}</span>${t.official ? '<span class="chip official">Paired to Axon</span>' : ''}${t.modelName ? `<span class="chip mint">backs ${esc(t.modelName)}</span>` : '<span class="chip">model not recorded</span>'}</div>
+    <div style="flex:1;min-width:16rem"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><h1>${esc(t.name || short(t.token))}</h1><span class="chip ${grad ? 'up' : ''}">${esc(t.status)}</span>${t.official ? '<span class="chip official">Paired to Glia</span>' : ''}${t.modelName ? `<span class="chip mint">backs ${esc(t.modelName)}</span>` : '<span class="chip">model not recorded</span>'}</div>
       <div class="faint" style="font-family:var(--head);font-weight:500;font-size:14px;letter-spacing:.01em;margin:.2rem 0 .5rem">$${esc(t.symbol || '?')}${t.official ? '' : ' · ETH'} · launched ${ago(t.launchedAt)} ago by <a href="${EXP}/address/${t.deployer}" target="_blank" rel="noopener">${short(t.deployer)} ↗</a></div>
       <div class="addr"><span class="mono">${t.token}</span><button class="copy" id="cp">copy</button><a href="${EXP}/address/${t.token}" target="_blank" rel="noopener">explorer ↗</a><a href="${EXP}/address/${t.curve}" target="_blank" rel="noopener">curve ↗</a></div>
-      ${t.description ? `<p class="muted" style="margin:.75rem 0 0;max-width:40rem;white-space:pre-wrap">${esc(t.description.replace(/\n?axon:model=\S+/, ''))}</p>` : ''}${(t.socials && (t.socials.website || t.socials.x || t.socials.telegram)) ? `<div class="socbtns">${['website', 'x', 'telegram'].filter(k => t.socials[k]).map(k => `<a href="${esc(t.socials[k])}" target="_blank" rel="noopener">${k === 'x' ? 'X' : k[0].toUpperCase() + k.slice(1)} ↗</a>`).join('')}</div>` : ''}</div>
+      ${t.description ? `<p class="muted" style="margin:.75rem 0 0;max-width:40rem;white-space:pre-wrap">${esc(t.description.replace(/\n?glia:model=\S+/, ''))}</p>` : ''}${(t.socials && (t.socials.website || t.socials.x || t.socials.telegram)) ? `<div class="socbtns">${['website', 'x', 'telegram'].filter(k => t.socials[k]).map(k => `<a href="${esc(t.socials[k])}" target="_blank" rel="noopener">${k === 'x' ? 'X' : k[0].toUpperCase() + k.slice(1)} ↗</a>`).join('')}</div>` : ''}</div>
     <div>${t.model ? `<a class="btn" href="${href('/chat')}?token=${t.token}&model=${encodeURIComponent(t.model)}">Talk to this model →</a>` : ''}</div></div>
   <div class="grid c4" style="margin:1.5rem 0">
     <div class="card stat"><div class="k">Price</div><div class="v">${usd(t.priceUsd)}</div><div class="sub">${priceEthTxt(t.priceEth)}</div></div>

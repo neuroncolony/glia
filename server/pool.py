@@ -1,4 +1,4 @@
-"""axon compute pool: token registry, indexer, entitlement, OpenRouter billing, API keys, agents (takes), bets (scoreboard).
+"""glia compute pool: token registry, indexer, entitlement, OpenRouter billing, API keys, agents (takes), bets (scoreboard).
 Money facts stated plainly: the 2% creator tax accrues in the pons escrow in ETH. A keeper claims it to the treasury wallet.
 This server reads the treasury balance and books spend per message at OpenRouter list price. It never holds keys or moves ETH."""
 import os, sys, time, threading, secrets, hashlib, re
@@ -9,9 +9,9 @@ except Exception:
     from compat import proxied_get, proxied_post
 
 class PoolError(Exception): pass
-CALLER = {'SC-CALLER-ID': 'preview:axon'}
+CALLER = {'SC-CALLER-ID': 'preview:glia'}
 OPENROUTER = 'https://openrouter.ai/api/v1/chat/completions'
-POOL_SHARE = float(os.environ.get('AXON_POOL_SHARE', '0.25'))  # fraction of treasury inflow that funds model compute; internal knob
+POOL_SHARE = float(os.environ.get('GLIA_POOL_SHARE', '0.25'))  # fraction of treasury inflow that funds model compute; internal knob
 def or_key(): return os.environ.get('OPENROUTER_API_KEY', '').strip()
 def chat_enabled(): return bool(or_key()) and bool(chain.treasury())
 
@@ -48,9 +48,9 @@ def register_launch(txhash, model, logo, description, socials=None, caller=None)
     if found['status'] != '0x1': raise PoolError('The launch transaction reverted.')
     sender = (chain.receipt(txhash) or {}).get('from', '')
     if not caller or not sender or caller.lower() != sender.lower(): raise PoolError('Only the wallet that sent the launch transaction can register it.')
-    if hidden.is_hidden(found['token']): raise PoolError('This token is not listed on axon.')
+    if hidden.is_hidden(found['token']): raise PoolError('This token is not listed on glia.')
     snap = chain.token_snapshot(found['token'])
-    if not snap['fundedByAxon']: raise PoolError('This token does not route its creator fee to the axon treasury, so it is not an axon launch.')
+    if not snap['fundedByGlia']: raise PoolError('This token does not route its creator fee to the Glia treasury, so it is not a Glia launch.')
     if model not in M.BY_ID: model = chain.model_from_tx(txhash)
     rec = _record(snap, model if model in M.BY_ID else None, logo, description, txhash, found['block'])
     so = socials or {}; rec['socials'] = {k: (str(so.get(k, ''))[:200] if str(so.get(k, '')).lower().startswith('https://') else '') for k in ('website', 'x', 'telegram')}
@@ -100,7 +100,7 @@ def logo_bytes(rec):
     hit = LOGO_CACHE.get(url)
     if hit: return hit
     try:
-        r = chain.proxied_get(url, headers={'SC-CALLER-ID': chain.CALLER, 'User-Agent': 'Mozilla/5.0 axon'}, timeout=8)
+        r = chain.proxied_get(url, headers={'SC-CALLER-ID': chain.CALLER, 'User-Agent': 'Mozilla/5.0 glia'}, timeout=8)
         if r.status_code != 200: return None
         body = r.content[:400000]; ct = r.headers.get('Content-Type', 'image/png')
         if not ct.startswith('image/'): return None
@@ -152,7 +152,7 @@ def _index_trades(head, budget=40.0):
         if time.time() > deadline: break
     store.save('tokens')
 
-FIRST_AXON_BLOCK = 67690000  # nothing paid our treasury before this block; skip the older pons history
+FIRST_GLIA_BLOCK = 67690000  # nothing paid our treasury before this block; skip the older pons history
 _ix = store.load('ixstate', {'lastBlock': None, 'notOurs': []})
 _ix.setdefault('lastBlock', None); _ix.setdefault('notOurs', []); _ix.setdefault('backfill', None)
 _ix['at'] = 0; _ix['lock'] = threading.Lock()
@@ -172,7 +172,7 @@ def refresh(force=False):
         st = chain.status()
         if not st.get('ok'): return {'error': st.get('error')}
         head = st['block']; tre = (chain.treasury() or '').lower()
-        floor = max(head - 400000, FIRST_AXON_BLOCK); adopted = 0
+        floor = max(head - 400000, FIRST_GLIA_BLOCK); adopted = 0
         deadline = time.time() + 45
         # newest blocks first: a launch made a minute ago is adopted on the very next sweep,
         # and the older backfill keeps creeping down behind it instead of blocking it
@@ -197,7 +197,7 @@ def refresh(force=False):
                     if r.lower() != tre:
                         _NOT_OURS.add(k); continue
                     snap = chain.token_snapshot(l['token'])
-                    if not snap['fundedByAxon']: _NOT_OURS.add(k); continue
+                    if not snap['fundedByGlia']: _NOT_OURS.add(k); continue
                     if adopted < 200:
                         rec = _record(snap, None, '', '', l['tx'], l['block']); rec['native'] = True; rec['creatorFeeRecipient'] = snap['creatorFeeRecipient']; TOKENS[rec['token'].lower()] = rec; adopted += 1
                         if not _has_launch_event(rec['token']):
@@ -303,11 +303,11 @@ def token_list(sort='new', model=None, status=None, limit=50):
     if pinned: pinned['official'] = True; rows.insert(0, pinned)
     return rows
 def token_detail(addr):
-    if hidden.is_hidden(addr): raise PoolError('This token is not listed on axon.')
+    if hidden.is_hidden(addr): raise PoolError('This token is not listed on glia.')
     rec = TOKENS.get(addr.lower())
     if not rec:
         snap = chain.token_snapshot(addr)
-        if not snap['fundedByAxon'] and addr.lower() != (official.official()['token'] or ''): raise PoolError('Not an axon launch. It is a pons v2 token, but its creator fee goes elsewhere.')
+        if not snap['fundedByGlia'] and addr.lower() != (official.official()['token'] or ''): raise PoolError('Not a Glia launch. It is a pons v2 token, but its creator fee goes elsewhere.')
         rec = _record(snap); TOKENS[rec['token'].lower()] = rec; store.save('tokens')
     elif store.now() - rec.get('updatedAt', 0) > 30:
         try:
@@ -380,9 +380,9 @@ def takes(limit=60, token=None):
     rows = hidden.visible(rows)
     return sorted(rows, key=lambda r: -r.get('at', 0))[:limit]
 
-SPENT_BASELINE_USD = float(os.environ.get('AXON_SPENT_BASELINE_USD', '0') or 0)  # pre-launch test spend written off so the public pool starts clean
+SPENT_BASELINE_USD = float(os.environ.get('GLIA_SPENT_BASELINE_USD', '0') or 0)  # pre-launch test spend written off so the public pool starts clean
 def spent_usd(): return round(max(0.0, LEDGER['spentUsd'] - SPENT_BASELINE_USD), 6)
-MESSAGES_BASELINE = int(os.environ.get('AXON_MESSAGES_BASELINE', '0') or 0)
+MESSAGES_BASELINE = int(os.environ.get('GLIA_MESSAGES_BASELINE', '0') or 0)
 def messages_count(): return max(0, LEDGER['messages'] - MESSAGES_BASELINE)
 def model_usage(): return {m: round(v, 6) for m, v in LEDGER['byModel'].items()}
 def leaderboard(by='mcap'):
@@ -403,7 +403,7 @@ def scoreboard():
     for r in rows: r['accuracy'] = (r['hits'] / (r['hits'] + r['misses'])) if (r['hits'] + r['misses']) else None
     return {'rows': sorted(rows, key=lambda r: (-(r['accuracy'] or 0), -r['bets'])), 'recent': hidden.visible(bets[-40:][::-1])}
 def offspring():
-    """An offspring is a token launched by a wallet that had already launched an axon token. Lineage is derived from chain order, not declared."""
+    """An offspring is a token launched by a wallet that had already launched a Glia token. Lineage is derived from chain order, not declared."""
     first = {}
     for r in sorted(_ours(), key=lambda r: r.get('block') or 0): first.setdefault(r['deployer'].lower(), r)
     px = eth_usd(); ts = _trade_stats()
@@ -411,10 +411,10 @@ def offspring():
     return sorted(out, key=lambda o: -o['child'].get('launchedAt', 0))
 def release_eth():
     """Cumulative ETH moved from the compute reserve to the owner share. Read live so a Railway change applies without a restart."""
-    try: return float(os.environ.get('AXON_POOL_RELEASE_ETH', '0') or 0)
+    try: return float(os.environ.get('GLIA_POOL_RELEASE_ETH', '0') or 0)
     except ValueError: return 0.0
 def fee_inflow_eth():
-    """Total creator tax earned across every axon token, from indexed on-chain trades (accrued, whether or not claimed yet)."""
+    """Total creator tax earned across every glia token, from indexed on-chain trades (accrued, whether or not claimed yet)."""
     wei = 0
     for r in _ours():
         for t in TRADES.get(r['token'].lower(), []):
@@ -458,7 +458,7 @@ def _reserve(model, max_tokens=700, prompt_tokens=6000):
     return est
 def _release(est):
     with _BUDGET: _RESERVED['usd'] = round(max(0.0, _RESERVED['usd'] - est), 6)
-KEY_DAILY_CAP_USD = float(os.environ.get('AXON_KEY_DAILY_CAP_USD', '5') or 5)
+KEY_DAILY_CAP_USD = float(os.environ.get('GLIA_KEY_DAILY_CAP_USD', '5') or 5)
 def _bill_key(key, cost):
     v = KEYS.get(key)
     if not v: return
@@ -477,7 +477,7 @@ def _bill(address, model, usage, key=None):
 def _openrouter(model, messages, max_tokens=700, system=None):
     if not or_key(): raise PoolError('The compute pool is not connected to OpenRouter yet.')
     msgs = ([{'role': 'system', 'content': system}] if system else []) + messages
-    r = proxied_post(OPENROUTER, headers={'Authorization': 'Bearer ' + or_key(), 'Content-Type': 'application/json', 'X-Title': 'axon', **CALLER},
+    r = proxied_post(OPENROUTER, headers={'Authorization': 'Bearer ' + or_key(), 'Content-Type': 'application/json', 'X-Title': 'glia', **CALLER},
                      json={'model': model, 'messages': msgs, 'max_tokens': max_tokens}, timeout=90)
     if r.status_code >= 400:
         print('openrouter error', r.status_code, r.text[:300], file=sys.stderr, flush=True)
@@ -490,7 +490,7 @@ def _clean(messages):
         if not isinstance(m, dict) or m.get('role') not in ('user', 'assistant') or not isinstance(m.get('content'), str): raise PoolError('Bad message shape.')
         out.append({'role': m['role'], 'content': m['content'][:6000]})
     return out
-SYSTEM = "You are answering inside axon, a launchpad on Robinhood Chain where 2% of every token trade funds model inference. Be direct and concise."
+SYSTEM = "You are answering inside glia, a launchpad on Robinhood Chain where 2% of every token trade funds model inference. Be direct and concise."
 def chat(address, model, messages, source='web', system_extra='', key=None):
     if model not in M.BY_ID: raise PoolError('Pick a listed model.')
     if not entitlement(address)['hasLaunched']: raise PoolError('Chat is open to wallets that have launched a token here. Launch one, then come back.')
@@ -508,7 +508,7 @@ KEYS = store.load('keys', {})
 def create_key(address, label):
     if not entitlement(address)['hasLaunched']: raise PoolError('API keys are issued to wallets that have launched a token.')
     if sum(1 for k in KEYS.values() if k['address'] == address.lower() and not k.get('revoked')) >= 5: raise PoolError('Five active keys per wallet.')
-    raw = 'axon_' + secrets.token_urlsafe(30); h = hashlib.sha256(raw.encode()).hexdigest()
+    raw = 'glia_' + secrets.token_urlsafe(30); h = hashlib.sha256(raw.encode()).hexdigest()
     KEYS[h] = {'address': address.lower(), 'label': label or 'default', 'createdAt': store.now(), 'prefix': raw[:12], 'revoked': False, 'calls': 0}
     store.save('keys'); return {'key': raw, 'record': {**KEYS[h], 'id': h[:12]}}
 def list_keys(address): return [{**v, 'id': k[:12]} for k, v in KEYS.items() if v['address'] == address.lower() and not v.get('revoked')]
@@ -523,15 +523,15 @@ def key_owner(raw):
     return None
 def completions(address, body, key=None):
     model = body.get('model', ''); res = chat(address, model, body.get('messages', []), source='api', key=key)
-    return {'id': 'axon-' + secrets.token_hex(6), 'object': 'chat.completion', 'model': model, 'created': store.now(),
+    return {'id': 'glia-' + secrets.token_hex(6), 'object': 'chat.completion', 'model': model, 'created': store.now(),
             'choices': [{'index': 0, 'message': {'role': 'assistant', 'content': res['reply']}, 'finish_reason': 'stop'}], 'usage': res['usage'],
-            'axon': {'costUsd': res['costUsd'], 'poolAvailableUsd': res['poolAvailableUsd']}}
+            'glia': {'costUsd': res['costUsd'], 'poolAvailableUsd': res['poolAvailableUsd']}}
 
 # ------------------------------------------------------------------ agents: each token's model speaks as the token (takes) and calls its own next 24h (bets)
 def agent_context(rec):
     e = enrich(rec)
     f = lambda v, fmt='{:.2f}': (fmt.format(v) if isinstance(v, (int, float)) else 'unknown')
-    return personas.context_prefix(rec['token'], rec) + (f"You are the model behind ${e.get('symbol')} on axon. Facts you may use, nothing else: launched {e['age'] // 3600}h ago; status {e['status']}; "
+    return personas.context_prefix(rec['token'], rec) + (f"You are the model behind ${e.get('symbol')} on glia. Facts you may use, nothing else: launched {e['age'] // 3600}h ago; status {e['status']}; "
             f"price {f(e.get('priceUsd'), '{:.3e}')} USD; market cap {f(e.get('marketCapUsd'))} USD; graduation progress {f(e.get('graduation'), '{:.1%}')}; "
             f"24h volume {e['volume24hUsd']:.2f} USD across {e['trades24h']} trades; compute your launcher has spent: ${LEDGER['byAddress'].get(rec['deployer'].lower(), 0):.2f}. "
             "Never invent numbers; say unknown if unknown. Write 2 to 4 plain first-person sentences, no hype, no emojis.")

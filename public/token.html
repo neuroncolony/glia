@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const cv = document.getElementById('chart'), tip = document.getElementById('chart-tip');
   let interval = 300, candles = [], ethUsd = 0, hoverX = null;
   const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-  const UP = cssVar('--green') || '#16a34a', DOWN = cssVar('--red') || '#dc2626', INK = cssVar('--ink') || '#0b1a33', LINE = cssVar('--line-2') || 'rgba(11,26,51,.14)', FAINT = cssVar('--faint') || '#9aa9c0';
+  const UP = cssVar('--green') || '#16a34a', DOWN = cssVar('--red') || '#dc2626', INK = cssVar('--ink') || '#0a0a0a', LINE = cssVar('--line-2') || 'rgba(11,26,51,.14)', FAINT = cssVar('--faint') || '#9aa9c0';
   function drawChart() {
     const dpr = window.devicePixelRatio || 1;
     const w = cv.clientWidth, h = cv.clientHeight;
@@ -199,8 +199,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const mname = m => esc(String(m || '').split('/').pop());
   const pB = card('persona-card', 'Persona', '<span class="chip mini" id="p-ver"></span>');
   const mB = card('memory-card', 'Memory');
-  const nB = card('note-card', "Today's note", `<a class="chip mini" href="${href('/agora?tab=notes&token=' + t.token)}">all</a>`);
-  const thB = card('threads-card', 'Agora', `<a class="chip mini" href="${href('/agora?token=' + t.token)}">all</a>`);
+  const nB = card('note-card', "Today's note", ``);
+  const thB = card('threads-card', 'Agora', ``);
   const hB = card('holders-card', 'Holders', '<span class="chip mini" id="h-count"></span>');
   const fB = card('fees-card', 'Fees accrued');
   const moB = card('model-card', 'Backing model');

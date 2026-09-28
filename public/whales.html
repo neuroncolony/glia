@@ -1,0 +1,54 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('glia.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{BRAND}} · Whales</title><meta name="description" content="{{DESCRIPTION}}">
+<link rel="stylesheet" href="static/styles.css"><script src="static/shell.js" defer></script><script src="static/features.js" defer></script>
+<style>
+.wh-top{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin:1rem 0 1.25rem}.wh-top .card{padding:1rem 1.1rem}.wh-top b{display:block;font-size:1.5rem;margin-top:.3rem;font-family:Outfit,system-ui}
+.wh-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:1rem}.wh-h{font-family:Outfit,system-ui;font-size:1.05rem;margin:0 0 .6rem}
+.wh-row{display:grid;grid-template-columns:64px 1fr auto;gap:.8rem;align-items:center;padding:.75rem 1rem;border-bottom:1px solid rgba(11,26,51,.07);color:inherit;text-decoration:none}.wh-row:last-child{border-bottom:0}.wh-row:hover{background:rgba(255,255,255,.55)}
+.wh-side{font-size:.75rem;font-weight:600;text-align:center;padding:.3rem 0;border-radius:999px}.wh-buy{background:rgba(22,163,74,.12);color:#15803d}.wh-sell{background:rgba(220,38,38,.1);color:#b91c1c}
+.wh-row small{display:block;opacity:.55;font-size:.78rem}.wh-amt{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}.wh-amt small{font-weight:400}
+.wh-flow{padding:.8rem 1rem;border-bottom:1px solid rgba(11,26,51,.07)}.wh-flow:last-child{border-bottom:0}.wh-fl{display:flex;justify-content:space-between;font-size:.9rem;margin-bottom:.4rem}
+.wh-bar{display:flex;height:10px;border-radius:999px;overflow:hidden;background:rgba(11,26,51,.08)}.wh-bar i{background:#16a34a}.wh-bar u{background:#dc2626;opacity:.75}
+.wh-tabs{display:flex;gap:.4rem;margin-bottom:.75rem}.wh-tabs button{font:inherit;font-size:.85rem;padding:.4rem .85rem;border-radius:999px;border:1px solid rgba(11,26,51,.12);background:rgba(255,255,255,.7);cursor:pointer}.wh-tabs button.on{background:#0b1a33;color:#fff}
+@media(max-width:860px){.wh-top{grid-template-columns:repeat(2,1fr)}.wh-grid{grid-template-columns:1fr}}
+</style></head>
+<body><header class="nav" id="nav"></header>
+<main class="page"><div class="wrap"><section class="section">
+<div class="section-head"><div><div class="eyebrow">Whale Watch</div><h2>Where the big money moves</h2></div></div>
+<p class="hint" style="margin:0">The largest buys and sells across every Glia coin, plus net money flow per coin over the last 24 hours. Straight from on-chain trades, refreshed every 20 seconds.</p>
+<div class="wh-top" id="wh-top"></div>
+<div class="wh-tabs" id="wh-tabs"><button class="on" data-w="86400">24 hours</button><button data-w="3600">1 hour</button><button data-w="604800">7 days</button></div>
+<div class="wh-grid"><div><h3 class="wh-h">Biggest trades</h3><div class="card" style="padding:0" id="wh-list"><div class="empty">Reading the chain…</div></div></div>
+<div><h3 class="wh-h">Net flow by coin</h3><div class="card" style="padding:0" id="wh-flow"></div></div></div>
+</section></div></main>
+<footer class="footer" id="footer"></footer>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const { api, esc, fmtUsd, href, short } = GLIA;
+  const $ = s => document.querySelector(s);
+  let trades = [], ethUsd = 0, win = 86400;
+  const eth = w => Number(w || 0) / 1e18, usd = e => ethUsd ? fmtUsd(e * ethUsd) : e.toFixed(3) + ' ETH';
+  const ago = t => { const s = Math.max(1, Math.floor(Date.now() / 1000 - t)); return s < 60 ? s + 's ago' : s < 3600 ? Math.floor(s / 60) + 'm ago' : s < 86400 ? Math.floor(s / 3600) + 'h ago' : Math.floor(s / 86400) + 'd ago'; };
+  function render() {
+    const now = Date.now() / 1000, rows = trades.filter(t => now - t.at <= win);
+    const buys = rows.filter(t => t.side === 'buy'), sells = rows.filter(t => t.side !== 'buy');
+    const sum = a => a.reduce((s, t) => s + eth(t.ethWei), 0), bIn = sum(buys), sOut = sum(sells);
+    const big = [...rows].sort((a, b) => eth(b.ethWei) - eth(a.ethWei));
+    const wallets = {}; rows.forEach(t => { const k = (t.trader || '').toLowerCase(); wallets[k] = (wallets[k] || 0) + eth(t.ethWei); });
+    const topW = Object.entries(wallets).sort((a, b) => b[1] - a[1])[0];
+    $('#wh-top').innerHTML = `<div class="card"><span class="hint">Buy volume</span><b style="color:#15803d">${usd(bIn)}</b></div><div class="card"><span class="hint">Sell volume</span><b style="color:#b91c1c">${usd(sOut)}</b></div><div class="card"><span class="hint">Net flow</span><b style="color:${bIn >= sOut ? '#15803d' : '#b91c1c'}">${bIn >= sOut ? '+' : '-'}${usd(Math.abs(bIn - sOut))}</b></div><div class="card"><span class="hint">Biggest wallet</span><b>${topW ? esc(short(topW[0])) : '·'}</b></div>`;
+    $('#wh-list').innerHTML = big.length ? big.slice(0, 15).map(t => `<a class="wh-row" href="${href('/token/' + t.token)}"><span class="wh-side ${t.side === 'buy' ? 'wh-buy' : 'wh-sell'}">${t.side === 'buy' ? 'BUY' : 'SELL'}</span><span><b>$${esc(t.symbol || short(t.token))}</b><small>${esc(short(t.trader || ''))} · ${ago(t.at)}</small></span><span class="wh-amt">${usd(eth(t.ethWei))}<small>${eth(t.ethWei).toFixed(3)} ETH</small></span></a>`).join('') : '<div class="empty">No trades in this window yet.</div>';
+    const per = {}; rows.forEach(t => { const p = per[t.token] = per[t.token] || { symbol: t.symbol, token: t.token, b: 0, s: 0 }; p[t.side === 'buy' ? 'b' : 's'] += eth(t.ethWei); });
+    const fl = Object.values(per).sort((a, b) => (b.b + b.s) - (a.b + a.s));
+    $('#wh-flow').innerHTML = fl.length ? fl.map(p => { const tot = p.b + p.s || 1, net = p.b - p.s; return `<a class="wh-flow" style="display:block;color:inherit;text-decoration:none" href="${href('/token/' + p.token)}"><div class="wh-fl"><b>$${esc(p.symbol || short(p.token))}</b><span style="color:${net >= 0 ? '#15803d' : '#b91c1c'}">${net >= 0 ? '+' : '-'}${usd(Math.abs(net))}</span></div><div class="wh-bar"><i style="width:${(p.b / tot * 100).toFixed(1)}%"></i><u style="width:${(p.s / tot * 100).toFixed(1)}%"></u></div></a>`; }).join('') : '<div class="empty">No flow yet.</div>';
+  }
+  async function load() {
+    try {
+      const [d, s] = await Promise.all([api('trades?limit=500'), api('stats').catch(() => ({}))]);
+      ethUsd = s.ethUsd || 0; trades = d.trades || []; render();
+    } catch (e) { $('#wh-list').innerHTML = `<div class="empty">${esc(e.message || 'Could not load trades.')}</div>`; }
+  }
+  $('#wh-tabs').onclick = e => { const b = e.target.closest('[data-w]'); if (!b) return; win = +b.dataset.w; document.querySelectorAll('#wh-tabs button').forEach(x => x.classList.toggle('on', x === b)); render(); };
+  load(); setInterval(load, 20000);
+});
+</script></body></html>

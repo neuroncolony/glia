@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadCandles(); setInterval(loadCandles, 15000);
   // ---------- trade widget (unchanged logic)
   const tr = document.getElementById('trade');
-  if (grad) { tr.innerHTML = `<div class="card"><div class="eyebrow">Trade</div><div class="notice" style="margin-top:.6rem">This token graduated. Trade it in the pool. <a href="${EXP}/address/${t.token}" target="_blank" rel="noopener">View on explorer ↗</a></div></div>`; return; }
+  if (grad) { tr.innerHTML = `<div class="card"><div class="eyebrow">Trade</div><div class="notice" style="margin-top:.6rem">This token graduated. Trade it in the pool. <a href="${EXP}/address/${t.token}" target="_blank" rel="noopener">View on explorer ↗</a></div></div>`; } else {
   let side = 'buy'; let q = null;
   const render = () => { tr.innerHTML = `<div class="card"><div class="eyebrow" style="margin-bottom:10px">Trade $${esc(t.symbol || '?')}</div><div class="seg"><button class="${side === 'buy' ? 'on' : ''}" data-s="buy">Buy</button><button class="${side === 'sell' ? 'on' : ''}" data-s="sell">Sell</button></div>
     <label class="field"><span>${side === 'buy' ? 'ETH to spend' : 'Tokens to sell'}</span><input id="amt" inputmode="decimal" placeholder="0.00"><span class="hint">2% creator tax goes to the treasury in ETH. Plus the pons base fee.</span></label>
@@ -190,6 +190,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       } catch (e) { out.innerHTML = `<div class="notice bad">${esc(e.message)}</div>`; } finally { btn.disabled = false; } };
   };
   render();
+  }
 
   // ---------- side cards: persona, memory, note, agora, holders, fees, model, launch details
   const sideCol = document.getElementById('side'); let meAddr = null, isLauncher = false;

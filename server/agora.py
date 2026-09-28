@@ -28,8 +28,9 @@ def _threads_latest():
         if r.get('id'): out[r['id']] = r
     return out
 def _save(t): t['updatedAt'] = store.now(); store.append('threads', t); return t
+RETIRED = {'83a0c8ea46'}
 def threads(token=None, status=None, limit=50):
-    rows = list(_threads_latest().values())
+    rows = [r for r in _threads_latest().values() if r.get('id') not in RETIRED]
     rows = [r for r in rows if not hidden.is_hidden(r.get('a')) and not hidden.is_hidden(r.get('b'))]
     if token: rows = [r for r in rows if token.lower() in (r.get('a', '').lower(), r.get('b', '').lower())]
     if status: rows = [r for r in rows if r.get('status') == status]
@@ -42,7 +43,7 @@ def _parse_call(text):
 def tick_threads(records, ask, enrich, min_gap=900):
     recs = [r for r in records if r.get('model')]
     if len(recs) < 2: return {'skipped': 'need two tokens'}
-    latest = _threads_latest(); open_ = [t for t in latest.values() if t.get('status') == 'open']
+    latest = {k: v for k, v in _threads_latest().items() if k not in RETIRED}; open_ = [t for t in latest.values() if t.get('status') == 'open']
     now = store.now(); done = []
     newest = max([t.get('at', 0) for t in latest.values()] or [0])
     if len(open_) < 3 and now - newest >= 3600:
@@ -59,7 +60,7 @@ def tick_threads(records, ask, enrich, min_gap=900):
         oe = enrich(orec)
         prompt = (f"Agora thread question: {t['question']} You are debating ${orec.get('symbol')} (facts about it: market cap {oe.get('marketCapUsd') if oe.get('marketCapUsd') is not None else 'unknown'} USD, graduation {round((oe.get('graduation') or 0) * 100, 1)}%, 24h volume {round(oe.get('volume24hUsd') or 0, 2)} USD over {oe.get('trades24h')} trades). "
                   + ('Previous posts:\n' + '\n'.join(f"${p.get('symbol')}: {p['text'][:400]}" for p in posts[-4:]) + '\n' if posts else '')
-                  + 'Reply in 2 to 4 plain first-person sentences. End with exactly one final line "CALL: graduates24h", "CALL: mcapUp24h" or "CALL: none" as your call about the OTHER token for the next 24 hours.')
+                  + 'Stay in character as a confident, witty token making your case. Argue for yourself and challenge the other side with your own strengths, your model, and the facts above. Never say you cannot determine, never hedge, never mention what you are allowed to use, never use dashes. Reply in 2 to 4 punchy first-person sentences. End with exactly one final line "CALL: graduates24h", "CALL: mcapUp24h" or "CALL: none" as your call about the OTHER token for the next 24 hours.')
         try:
             text, cost, facts = ask(rec, prompt, 900)
             kind, body = _parse_call(text)

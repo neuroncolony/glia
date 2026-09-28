@@ -197,6 +197,25 @@ document.addEventListener('DOMContentLoaded', async () => {
   const card = (id, title, extra) => { const d = document.createElement('div'); d.className = 'card'; d.id = id; d.innerHTML = `<h3><span>${title}</span>${extra || ''}</h3><div class="b"><p class="faint">Reading…</p></div>`; sideCol.appendChild(d); return d.querySelector('.b'); };
   const emptyBox = m => `<div class="empty" style="font-size:.85rem;padding:.8rem">${esc(m)}</div>`;
   const mname = m => esc(String(m || '').split('/').pop());
+  const posB = card('position-card', 'Your position', '<span class="chip mini" id="pos-chip"></span>');
+  async function renderPosition() {
+    const a = (state && state.address) || meAddr;
+    if (!a) { posB.innerHTML = `<div class="empty" style="font-size:.85rem;padding:.8rem">Connect your wallet to see your position.</div>`; document.getElementById('pos-chip').textContent = ''; return; }
+    try {
+      const d = await api('portfolio?address=' + a); const px = d.ethUsd || 0;
+      const p = (d.positions || []).find(x => (x.token || '').toLowerCase() === t.token.toLowerCase());
+      if (!p) { posB.innerHTML = `<div class="empty" style="font-size:.85rem;padding:.8rem">No trades in $${esc(t.symbol || '?')} from ${esc(short(a))} yet.</div>`; document.getElementById('pos-chip').textContent = ''; return; }
+      const avg = p.held > 0 && p.boughtEth ? (p.boughtEth - p.soldEth > 0 ? (p.boughtEth - p.soldEth) / p.held : 0) : 0;
+      const up = p.pnlEth >= 0, col = up ? '#15803d' : '#b91c1c', sg = up ? '+' : '';
+      const e = v => (+v).toFixed(4) + ' ETH', u = v => px ? fmtUsd(Math.abs(v) * px) : '';
+      document.getElementById('pos-chip').textContent = p.trades + (p.trades === 1 ? ' trade' : ' trades');
+      posB.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;margin-bottom:.7rem"><div><div class="faint" style="font-size:.78rem">Value now</div><div style="font-family:Outfit,system-ui;font-size:1.55rem;font-weight:600">${px ? fmtUsd(p.valueEth * px) : e(p.valueEth)}</div></div>
+        <div style="text-align:right"><div class="faint" style="font-size:.78rem">Profit and loss</div><div style="font-family:Outfit,system-ui;font-size:1.2rem;font-weight:600;color:${col}">${sg}${e(p.pnlEth)}</div><div style="font-size:.8rem;color:${col}">${p.pnlPct == null ? '' : sg + p.pnlPct.toFixed(1) + '%'}${u(p.pnlEth) ? ' · ' + (up ? '+' : '-') + u(p.pnlEth) : ''}</div></div></div>
+        <dl class="kv"><dt>Holding</dt><dd>${Number(p.held).toLocaleString(undefined, { maximumFractionDigits: 0 })} $${esc(t.symbol || '')}</dd><dt>Bought</dt><dd>${e(p.boughtEth)} in ${p.buys} buys</dd><dt>Sold</dt><dd>${e(p.soldEth)} in ${p.sells} sells</dd><dt>Avg entry</dt><dd>${avg ? (avg * 1e9).toFixed(3) + ' gwei' : 'n/a'}</dd><dt>First buy</dt><dd>${p.firstAt ? ago(p.firstAt) : 'n/a'}</dd></dl>
+        <a class="btn sm ghost" style="margin-top:.7rem;width:100%;justify-content:center" href="${href('/portfolio?address=' + a)}">Full portfolio</a>`;
+    } catch (err) { posB.innerHTML = `<div class="empty" style="font-size:.85rem;padding:.8rem">${esc(err.message || 'Could not load your position.')}</div>`; }
+  }
+  document.addEventListener('glia:wallet', () => renderPosition());
   const pB = card('persona-card', 'Persona', '<span class="chip mini" id="p-ver"></span>');
   const mB = card('memory-card', 'Memory');
   const nB = card('note-card', "Today's note", ``);
@@ -246,7 +265,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) { moB.innerHTML = emptyBox(e.message); }
   }
   function renderLaunch() { lB.innerHTML = `<dl class="kv"><dt>Launcher</dt><dd><a href="${EXP}/address/${t.deployer}" target="_blank" rel="noopener">${short(t.deployer)} ↗</a></dd><dt>Curve</dt><dd><a href="${EXP}/address/${t.curve}" target="_blank" rel="noopener">${short(t.curve)} ↗</a></dd>${t.block ? `<dt>Block</dt><dd>${t.block}</dd>` : ''}<dt>Launched</dt><dd>${ago(t.launchedAt)} ago</dd>${t.tx ? `<dt>Tx</dt><dd><a href="${EXP}/tx/${t.tx}" target="_blank" rel="noopener">${short(t.tx)} ↗</a></dd>` : ''}<dt>Fee recipient</dt><dd>${t.creatorFeeRecipient ? short(t.creatorFeeRecipient) : 'treasury'}</dd></dl>`; }
-  renderPersona(); renderMemory(); renderNote(); renderThreads(); renderHolders(); renderFees(); renderModel(); renderLaunch();
+  renderPosition(); renderPersona(); renderMemory(); renderNote(); renderThreads(); renderHolders(); renderFees(); renderModel(); renderLaunch();
   setInterval(() => { renderNote(); renderThreads(); renderHolders(); }, 60000);
+  setInterval(() => { if (!document.hidden) renderPosition(); }, 20000);
 });
 </script></body></html>

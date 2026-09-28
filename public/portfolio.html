@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('#pf-addr').value = addr; history.replaceState(null, '', location.pathname + '?address=' + addr);
     out.innerHTML = '<div class="empty">Reading the chain…</div>';
     try {
-      const d = await api('/api/portfolio?address=' + addr); ethUsd = d.ethUsd || 0; const t = d.totals;
+      const d = await api('portfolio?address=' + addr); ethUsd = d.ethUsd || 0; const t = d.totals;
       if (!d.positions.length) { out.innerHTML = `<div class="card"><b>${esc(short(addr))}</b><p class="hint" style="margin:.4rem 0 0">No Glia trades from this wallet yet. <a href="${href('/explore')}">Find a coin</a> to start.</p></div>`; return; }
       out.innerHTML = `<div class="card" style="margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center"><div><div class="eyebrow">Wallet</div><a class="mono" target="_blank" rel="noopener" href="${GLIA.CHAIN.explorer}/address/${esc(addr)}">${esc(short(addr))} ↗</a></div><div class="hint">${d.positions.length} coin${d.positions.length>1?'s':''} · ${d.positions.reduce((a,p)=>a+p.trades,0)} trades</div></div>
       <div class="pf-tot"><div class="card"><span class="hint">Value now</span><b>${u(t.valueEth)}</b></div><div class="card"><span class="hint">Total PnL</span><b>${sign(t.pnlEth, t.pnlPct)}</b></div><div class="card"><span class="hint">Put in</span><b>${u(t.boughtEth)}</b></div><div class="card"><span class="hint">Taken out</span><b>${u(t.soldEth)}</b></div></div>
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('#pf-form').onsubmit = e => { e.preventDefault(); load($('#pf-addr').value); };
   $('#pf-me').onclick = async () => { try { if (!state.address) await GLIA.openWalletModal(); load(state.address); } catch (e) {} };
   document.addEventListener('glia:wallet', e => { if (!$('#pf-addr').value) load(e.detail.address); });
-  try { const r = await api('/api/traders?limit=6'); $('#pf-chips').innerHTML = r.traders.map(a => `<button data-a="${esc(a)}">${esc(short(a))}</button>`).join(''); $('#pf-chips').onclick = e => { const b = e.target.closest('[data-a]'); if (b) load(b.dataset.a); }; if (!r.traders.length) $('#pf-chips-wrap').style.display='none'; } catch (e) { $('#pf-chips-wrap').style.display='none'; }
+  try { const r = await api('traders?limit=6'); $('#pf-chips').innerHTML = r.traders.map(a => `<button data-a="${esc(a)}">${esc(short(a))}</button>`).join(''); $('#pf-chips').onclick = e => { const b = e.target.closest('[data-a]'); if (b) load(b.dataset.a); }; if (!r.traders.length) $('#pf-chips-wrap').style.display='none'; } catch (e) { $('#pf-chips-wrap').style.display='none'; }
   const q = new URLSearchParams(location.search).get('address'); if (q) load(q); else if (state.address) load(state.address);
 });
 </script></body></html>

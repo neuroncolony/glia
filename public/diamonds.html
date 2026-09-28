@@ -1,0 +1,51 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('glia.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{BRAND}} · Diamond Hands</title><meta name="description" content="{{DESCRIPTION}}">
+<link rel="stylesheet" href="static/styles.css"><script src="static/shell.js" defer></script><script src="static/features.js" defer></script>
+<style>
+.dh-top{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin:1rem 0 1.25rem}.dh-top .card{padding:1rem 1.1rem}.dh-top b{display:block;font-size:1.5rem;margin-top:.3rem;font-family:Outfit,system-ui}
+.dh-grid{display:grid;grid-template-columns:1fr 340px;gap:1rem;align-items:start}
+.dh-coin{padding:1.1rem 1.2rem;margin-bottom:1rem}.dh-coin .hd{display:flex;align-items:center;gap:.7rem;justify-content:space-between;flex-wrap:wrap}
+.dh-coin .id{display:flex;align-items:center;gap:.65rem;text-decoration:none;color:inherit}.dh-coin img{width:40px;height:40px;border-radius:50%;object-fit:cover;background:rgba(11,26,51,.06)}
+.dh-coin b{font-family:Outfit,system-ui;font-size:1.25rem}.dh-score{font-family:Outfit,system-ui;font-size:1.6rem;font-weight:600;text-align:right;line-height:1}.dh-score small{display:block;font-size:.72rem;font-weight:400;opacity:.6}
+.dh-gems{display:grid;grid-template-columns:repeat(20,1fr);gap:4px;margin:.9rem 0 .6rem}.dh-gem{aspect-ratio:1;border-radius:6px;position:relative;cursor:default}
+.dh-gem.diamond{background:linear-gradient(135deg,#22c55e,#16a34a)}.dh-gem.holding{background:linear-gradient(135deg,#bbf7d0,#86efac)}.dh-gem.paper{background:rgba(11,26,51,.08)}
+.dh-gem .tip{display:none;position:absolute;bottom:130%;left:50%;transform:translateX(-50%);background:#0b1a33;color:#fff;font-size:.72rem;padding:.35rem .55rem;border-radius:8px;white-space:nowrap;z-index:5}.dh-gem:hover .tip{display:block}
+.dh-legend{display:flex;gap:1rem;font-size:.8rem;opacity:.75;flex-wrap:wrap}.dh-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:.35rem;vertical-align:-1px}
+.dh-w{padding:1.1rem 1.2rem;position:sticky;top:90px}.dh-w h3{margin:0 0 .75rem;font-family:Outfit,system-ui}
+.dh-row{display:flex;justify-content:space-between;align-items:center;padding:.55rem 0;border-top:1px solid rgba(11,26,51,.07);gap:.5rem}.dh-row:first-of-type{border-top:0}
+.dh-row a{font-family:ui-monospace,monospace;font-size:.85rem;color:inherit}.dh-row .n{width:1.4rem;opacity:.5;font-size:.8rem}.dh-row span.v{font-size:.8rem;text-align:right}
+.dh-row .pill{background:#0b1a33;color:#fff;border-radius:999px;padding:.15rem .55rem;font-size:.72rem;margin-left:.3rem}
+@media(max-width:900px){.dh-grid{grid-template-columns:1fr}.dh-w{position:static}.dh-top{grid-template-columns:repeat(2,1fr)}.dh-gems{grid-template-columns:repeat(10,1fr)}}
+</style></head>
+<body><header class="nav" id="nav"></header>
+<main class="page"><div class="wrap"><section class="section">
+<div class="section-head"><div><div class="eyebrow">Diamond Hands</div><h2>Who bought first, and who is still holding</h2></div></div>
+<p class="hint" style="margin:0">The first 20 buyers of every Glia coin, straight from the chain. Each gem is one early buyer: bright green still holds their full bag, light green kept some, grey sold out.</p>
+<div class="dh-top" id="dh-top"></div>
+<div class="dh-grid"><div id="dh-coins"><div class="card empty">Reading the chain…</div></div>
+<div class="card dh-w"><h3>Strongest hands</h3><div id="dh-wallets"><div class="empty">Reading the chain…</div></div></div></div>
+</section></div></main>
+<footer class="footer" id="footer"></footer>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const { api, esc, fmtUsd, href, short } = GLIA;
+  const $ = s => document.querySelector(s), pct = v => Math.round(v * 100) + '%';
+  const ago = t => { const s = Date.now() / 1000 - t; return s < 3600 ? Math.max(1, Math.round(s / 60)) + 'm ago' : s < 86400 ? Math.round(s / 3600) + 'h ago' : Math.round(s / 86400) + 'd ago'; };
+  const label = { diamond: 'Still holding', holding: 'Kept some', paper: 'Sold out' };
+  async function load() {
+    try {
+      const d = await api('diamonds'), coins = d.coins || [];
+      if (!coins.length) { $('#dh-coins').innerHTML = `<div class="card empty">No trades yet. <a href="${href('/launch')}">Launch a coin →</a></div>`; return; }
+      const all = coins.flatMap(c => c.buyers), dia = all.filter(b => b.tier === 'diamond').length;
+      $('#dh-top').innerHTML = `<div class="card"><span class="hint">Early buyers tracked</span><b>${all.length}</b></div><div class="card"><span class="hint">Still fully holding</span><b>${dia} · ${pct(dia / all.length)}</b></div><div class="card"><span class="hint">Average bag kept</span><b>${pct(all.reduce((a, b) => a + b.kept, 0) / all.length)}</b></div><div class="card"><span class="hint">Strongest community</span><b>$${esc(coins[0].symbol)} · ${pct(coins[0].score)}</b></div>`;
+      $('#dh-coins').innerHTML = coins.map(c => `<div class="card dh-coin"><div class="hd">
+        <a class="id" href="${href('/token/' + c.token)}"><img src="${esc(href('/api/token/' + c.token + '/logo'))}" alt="" onerror="this.style.visibility='hidden'"><div><b>$${esc(c.symbol || short(c.token))}</b><div class="hint">${esc(c.name || '')}</div></div></a>
+        <div class="dh-score">${pct(c.score)}<small>of early bags still held</small></div></div>
+        <div class="dh-gems">${c.buyers.map(b => `<div class="dh-gem ${b.tier}"><span class="tip">#${b.rank} ${esc(short(b.address))} · ${label[b.tier]} ${b.tier === 'holding' ? pct(b.kept) : ''} · in ${ago(b.firstAt)}</span></div>`).join('')}</div>
+        <div class="dh-legend"><span><i style="background:#16a34a"></i>${c.diamond} still holding</span><span><i style="background:#86efac"></i>${c.buyers.length - c.diamond - c.paper} kept some</span><span><i style="background:rgba(11,26,51,.12)"></i>${c.paper} sold out</span></div></div>`).join('');
+      $('#dh-wallets').innerHTML = (d.wallets || []).map((w, i) => `<div class="dh-row"><span class="n">${i + 1}</span><a href="${href('/portfolio?address=' + w.address)}" style="flex:1">${esc(short(w.address))}</a><span class="v">${w.diamond}/${w.coins} held<span class="pill">${pct(w.avgKept)}</span></span></div>`).join('') || '<div class="empty">No wallets yet.</div>';
+    } catch (e) { $('#dh-coins').innerHTML = `<div class="card empty">${esc(e.message || 'Could not load Diamond Hands.')}</div>`; }
+  }
+  load(); setInterval(load, 20000);
+});
+</script></body></html>

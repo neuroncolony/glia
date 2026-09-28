@@ -103,3 +103,41 @@ def recent_events(events_rows, since, TOKENS):
                     'by': r.get('by'), 'ethWei': r.get('ethWei'), 'at': r.get('at'),
                     'id': r.get('tx') or r.get('noteId') or r.get('id')})
     return sorted(out, key=lambda r: -r.get('at', 0))
+
+def diamonds(tokens, trades_by_token, eth_usd, first_n=20):
+    """Diamond Hands board: the first buyers of every coin and how much of their bag they still hold."""
+    bal_all = store.load('holders', {}); out = []; wallets = {}
+    for key, rec in tokens.items():
+        rows = sorted(trades_by_token.get(key, []), key=lambda r: (r.get('block', 0), r.get('logIndex', 0)))
+        curve = (rec.get('curve') or '').lower(); bals = bal_all.get(key, {})
+        order = []; bought = {}; sold = {}; spent = {}; first_at = {}
+        for r in rows:
+            a = (r.get('trader') or '').lower()
+            if not a or a == curve: continue
+            w = int(r.get('tokenWei') or 0)
+            if r.get('side') == 'buy':
+                if a not in bought:
+                    if len(order) >= first_n: continue
+                    order.append(a); first_at[a] = r.get('at'); bought[a] = 0; spent[a] = 0
+                bought[a] += w; spent[a] += int(r.get('ethWei') or 0)
+            elif a in bought: sold[a] = sold.get(a, 0) + w
+        buyers = []
+        for i, a in enumerate(order):
+            b = bought[a]
+            try: now = int(bals.get(a, 0))
+            except (TypeError, ValueError): now = 0
+            kept = min(1.0, now / b) if b else 0.0
+            tier = 'diamond' if kept >= 0.9 else 'holding' if kept > 0.01 else 'paper'
+            buyers.append({'rank': i + 1, 'address': to_checksum_address(a), 'firstAt': first_at[a], 'kept': kept, 'tier': tier,
+                           'spentUsd': spent[a] / 1e18 * (eth_usd or 0), 'soldWei': str(sold.get(a, 0))})
+            wv = wallets.setdefault(a, {'address': to_checksum_address(a), 'coins': 0, 'diamond': 0, 'kept': 0.0})
+            wv['coins'] += 1; wv['kept'] += kept; wv['diamond'] += tier == 'diamond'
+        if not buyers: continue
+        n = len(buyers)
+        out.append({'token': rec.get('token'), 'symbol': rec.get('symbol'), 'name': rec.get('name'), 'buyers': buyers,
+                    'score': sum(x['kept'] for x in buyers) / n, 'diamond': sum(x['tier'] == 'diamond' for x in buyers),
+                    'paper': sum(x['tier'] == 'paper' for x in buyers)})
+    out.sort(key=lambda t: -t['score'])
+    top = sorted(wallets.values(), key=lambda w: (-w['diamond'], -w['kept'] / w['coins'], -w['coins']))[:10]
+    for w in top: w['avgKept'] = w.pop('kept') / w['coins']
+    return {'coins': out, 'wallets': top, 'firstN': first_n}

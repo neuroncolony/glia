@@ -285,6 +285,14 @@ def enrich(rec, px=None, ts=None):
     last_rows = TRADES.get(rec['token'].lower(), [])
     last_at = last_rows[-1]['at'] if last_rows else None
     logo_url = '/api/token/' + rec['token'] + '/logo'
+    if graduated and not rec.get('priceEth'):
+        # graduated coins trade on the DEX: price them from the live pool (cached 30s)
+        try:
+            dp = chain.dex_price_eth(rec['token'])
+            if dp:
+                sup = chain.cached('supply:' + rec['token'].lower(), lambda: int(chain.erc20(rec['token']).get('totalSupply') or 0), ttl=3600)
+                rec = {**rec, 'priceEth': dp, 'marketCapEth': dp * sup / 10**18 if sup else None}
+        except Exception: pass
     return {**{k: v for k, v in rec.items() if k != '_modelTried'}, 'priceUsd': (rec.get('priceEth') or 0) * px if rec.get('priceEth') else None,
             'marketCapUsd': (rec.get('marketCapEth') or 0) * px if rec.get('marketCapEth') else None,
             'volume24hEth': vol_eth, 'volume24hUsd': vol_eth * px, 'trades24h': n,

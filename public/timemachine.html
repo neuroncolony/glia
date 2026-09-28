@@ -12,12 +12,13 @@
 .tm-c .hd{display:flex;align-items:center;gap:.6rem}.tm-c img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:rgba(11,26,51,.06)}.tm-c b{font-family:Outfit,system-ui;font-size:1.1rem}
 .tm-c .v{display:flex;justify-content:space-between;align-items:end;margin-top:.7rem}.tm-c .v strong{font-family:Outfit,system-ui;font-size:1.5rem}
 .tm-c svg,.tm-hero svg{width:100%;display:block}.tm-meta{display:flex;justify-content:space-between;font-size:.8rem;opacity:.65;margin-top:.5rem;flex-wrap:wrap;gap:.4rem}
+.tm-live{display:inline-flex;align-items:center;gap:.45rem;font-size:.8rem;background:rgba(22,163,74,.1);color:#15803d;border-radius:999px;padding:.3rem .75rem;font-weight:600}.tm-live i{width:8px;height:8px;border-radius:50%;background:#16a34a;animation:tmp 1.4s infinite}@keyframes tmp{0%{box-shadow:0 0 0 0 rgba(22,163,74,.6)}70%{box-shadow:0 0 0 8px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}.tm-big.up{color:#16a34a}.tm-big.dn{color:#0b1a33}.tm-big{transition:color .6s}
 @media(max-width:860px){.tm-ctl,.tm-hero{grid-template-columns:1fr}.tm-big{font-size:2.5rem}}
 </style></head>
 <body><header class="nav" id="nav"></header>
 <main class="page"><div class="wrap"><section class="section">
-<div class="section-head"><div><div class="eyebrow">Time Machine</div><h2>What if you had bought earlier?</h2></div></div>
-<p class="hint" style="margin:0">Pick an amount and a moment. See what that buy would be worth right now, priced from real on-chain trades.</p>
+<div class="section-head"><div><div class="eyebrow">Time Machine</div><h2>What if you had bought earlier?</h2></div><span class="tm-live"><i></i><span id="tm-upd">Live</span></span></div>
+<p class="hint" style="margin:0">Pick an amount and a moment. See what that buy would be worth right now, priced live from on-chain trades every 5 seconds.</p>
 <div class="card tm-ctl"><div><label>Amount in USD</label><input id="tm-amt" type="number" min="1" value="100"></div>
 <div><label>Bought</label><div class="tm-tabs" id="tm-when"><button class="on" data-w="launch">At launch</button><button data-w="7d">7d ago</button><button data-w="24h">24h ago</button><button data-w="1h">1h ago</button></div></div>
 <div><label>Coin</label><div class="tm-tabs" id="tm-pick"></div></div></div>
@@ -30,7 +31,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const { api, esc, fmtUsd, href, short } = GLIA;
   const $ = s => document.querySelector(s);
-  let data = null, when = 'launch', pick = null;
+  let data = null, when = 'launch', pick = null, lastAt = 0, shown = null;
   const lbl = { launch: 'at launch', '7d': '7 days ago', '24h': '24 hours ago', '1h': '1 hour ago' };
   const from = c => c.points[when] || c.points.launch;
   const mult = c => c.nowEth / from(c);
@@ -42,14 +43,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const up = mult(c) >= 1, col = up ? '#16a34a' : '#0b1a33', id = 'g' + c.token.slice(2, 8) + h;
     return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="height:${h}px"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".25"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs><path d="${d} L${w} ${h} L0 ${h} Z" fill="url(#${id})"/><path d="${d}" fill="none" stroke="${col}" stroke-width="2.2" vector-effect="non-scaling-stroke"/></svg>`;
   }
-  function render() {
+  let render = function () {
     if (!data) return; const amt = Math.max(0, Number($('#tm-amt').value) || 0), coins = data.coins;
     if (!coins.length) { $('#tm-hero').innerHTML = `<div class="card empty">No trades yet. <a href="${href('/launch')}">Launch a coin →</a></div>`; return; }
     if (!pick || !coins.find(c => c.token === pick)) pick = coins[0].token;
     $('#tm-pick').innerHTML = coins.map(c => `<button data-t="${c.token}" class="${c.token === pick ? 'on' : ''}">$${esc(c.symbol || short(c.token))}</button>`).join('');
     const c = coins.find(x => x.token === pick), m = mult(c), peak = c.peakEth / from(c);
     $('#tm-hero').innerHTML = `<div class="card"><span class="hint">${fmtUsd(amt)} of $${esc(c.symbol)} bought ${lbl[when]}${c.points[when] ? '' : ' (first trade)'} is worth</span>
-      <div class="tm-big">${fmtUsd(amt * m)}</div><span class="tm-mult ${m >= 1 ? '' : 'dn'}">${mx(m)}</span>
+      <div class="tm-big" id="tm-big">${fmtUsd(shown == null ? amt * m : shown)}</div><span class="tm-mult ${m >= 1 ? '' : 'dn'}">${mx(m)}</span>
       <div class="tm-meta" style="margin-top:1rem"><span>At the peak: ${fmtUsd(amt * peak)} (${mx(peak)})</span><span>Price now ${fmtUsd(c.nowEth * data.ethUsd)}</span></div>
       <a class="btn" style="margin-top:1.1rem;display:inline-block" href="${href('/token/' + c.token)}">Trade $${esc(c.symbol)}</a></div>
       <div class="card"><span class="hint">$${esc(c.symbol)} price since launch</span>${spark(c, 210, 600)}<div class="tm-meta"><span>Launched ${new Date(c.firstAt * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span><span>Now</span></div></div>`;
@@ -59,7 +60,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const choose = e => { const b = e.target.closest('[data-t]'); if (!b) return; pick = b.dataset.t; render(); scrollTo({ top: 0, behavior: 'smooth' }); };
   $('#tm-pick').onclick = choose; $('#tm-list').onclick = choose; $('#tm-amt').oninput = render;
   $('#tm-when').onclick = e => { const b = e.target.closest('button'); if (!b) return; when = b.dataset.w; document.querySelectorAll('#tm-when button').forEach(x => x.classList.toggle('on', x === b)); render(); };
-  async function load() { try { data = await api('timemachine'); render(); } catch (e) { $('#tm-hero').innerHTML = `<div class="card empty">${esc(e.message || 'Could not load the Time Machine.')}</div>`; } }
-  load(); setInterval(load, 20000);
+  function tick(target) { const el = $('#tm-big'); if (!el) return; const start = shown == null ? target : shown, t0 = performance.now();
+    if (Math.abs(target - start) > 1e-9) el.classList.add(target > start ? 'up' : 'dn');
+    const step = n => { const k = Math.min(1, (n - t0) / 700), v = start + (target - start) * (1 - Math.pow(1 - k, 3)); el.textContent = fmtUsd(v); shown = v; if (k < 1) requestAnimationFrame(step); else setTimeout(() => el.classList.remove('up', 'dn'), 900); }; requestAnimationFrame(step); }
+  const _render = render; render = () => { _render(); const c = data && data.coins.find(x => x.token === pick); if (c) tick(Math.max(0, Number($('#tm-amt').value) || 0) * mult(c)); };
+  setInterval(() => { if (lastAt) { const s = Math.round((Date.now() - lastAt) / 1000); $('#tm-upd').textContent = s < 2 ? 'Live · just now' : 'Live · ' + s + 's ago'; } }, 1000);
+  async function load() { try { data = await api('timemachine'); lastAt = Date.now(); render(); } catch (e) { $('#tm-hero').innerHTML = `<div class="card empty">${esc(e.message || 'Could not load the Time Machine.')}</div>`; } }
+  load(); setInterval(() => { if (!document.hidden) load(); }, 5000);
 });
 </script></body></html>

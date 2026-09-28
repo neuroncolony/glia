@@ -653,3 +653,25 @@ def run_agents_threads_only():
         return text, cost, {}
     debaters = [r for r in TOKENS.values() if r.get('model') and not hidden.is_hidden(r.get('token'))]
     return agora.tick_threads(debaters, ask, enrich, min_gap=0)
+
+def time_machine():
+    """Time Machine feed: for every coin, the price at launch, 7d, 24h and 1h ago, the peak, and the price now (all in ETH)."""
+    now = store.now(); out = []
+    for key, rec in TOKENS.items():
+        if hidden.is_hidden(rec.get('token')): continue
+        rows = sorted((r for r in TRADES.get(key, []) if r.get('priceEth')), key=lambda r: (r.get('at', 0), r.get('logIndex', 0)))
+        cur = rec.get('priceEth') or (rows[-1]['priceEth'] if rows else None)
+        if not rows or not cur: continue
+        def at(ts):
+            p = None
+            for r in rows:
+                if r['at'] <= ts: p = r['priceEth']
+                else: break
+            return p
+        pts = {'launch': rows[0]['priceEth'], '7d': at(now - 604800), '24h': at(now - 86400), '1h': at(now - 3600)}
+        step = max(1, len(rows) // 60)
+        out.append({'token': rec['token'], 'symbol': rec.get('symbol'), 'name': rec.get('name'), 'launchedAt': rec.get('launchedAt') or rows[0]['at'],
+                    'firstAt': rows[0]['at'], 'nowEth': cur, 'peakEth': max(max(r['priceEth'] for r in rows), cur), 'points': pts,
+                    'spark': [[r['at'], r['priceEth']] for r in rows[::step]] + [[now, cur]]})
+    out.sort(key=lambda c: -(c['nowEth'] / c['points']['launch']))
+    return {'coins': out, 'ethUsd': eth_usd(), 'now': now}

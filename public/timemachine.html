@@ -1,0 +1,65 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('glia.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{BRAND}} · Time Machine</title><meta name="description" content="{{DESCRIPTION}}">
+<link rel="stylesheet" href="static/styles.css"><script src="static/shell.js" defer></script><script src="static/features.js" defer></script>
+<style>
+.tm-ctl{display:grid;grid-template-columns:1.2fr 1fr 1.4fr;gap:.9rem;margin:1rem 0 1.25rem;padding:1.1rem 1.2rem}
+.tm-ctl label{display:block;font-size:.78rem;opacity:.6;margin-bottom:.4rem}.tm-ctl input{width:100%;box-sizing:border-box;font:inherit;font-size:1.2rem;padding:.55rem .8rem;border-radius:12px;border:1px solid rgba(11,26,51,.12);background:rgba(255,255,255,.8);font-family:Outfit,system-ui}
+.tm-tabs{display:flex;gap:.4rem;flex-wrap:wrap}.tm-tabs button{font:inherit;font-size:.85rem;padding:.5rem .85rem;border-radius:999px;border:1px solid rgba(11,26,51,.12);background:rgba(255,255,255,.7);cursor:pointer}.tm-tabs button.on{background:#0b1a33;color:#fff}
+.tm-hero{display:grid;grid-template-columns:1fr 1.3fr;gap:1rem;margin-bottom:1rem}.tm-hero .card{padding:1.3rem 1.4rem}
+.tm-big{font-family:Outfit,system-ui;font-size:3.2rem;font-weight:600;line-height:1;margin:.4rem 0}.tm-mult{display:inline-block;background:#16a34a;color:#fff;border-radius:999px;padding:.2rem .7rem;font-size:.9rem;font-weight:600}.tm-mult.dn{background:#0b1a33}
+.tm-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem}
+.tm-c{padding:1rem 1.1rem;cursor:pointer;transition:transform .15s,box-shadow .15s;border:2px solid transparent}.tm-c:hover{transform:translateY(-2px)}.tm-c.on{border-color:#0b1a33}
+.tm-c .hd{display:flex;align-items:center;gap:.6rem}.tm-c img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:rgba(11,26,51,.06)}.tm-c b{font-family:Outfit,system-ui;font-size:1.1rem}
+.tm-c .v{display:flex;justify-content:space-between;align-items:end;margin-top:.7rem}.tm-c .v strong{font-family:Outfit,system-ui;font-size:1.5rem}
+.tm-c svg,.tm-hero svg{width:100%;display:block}.tm-meta{display:flex;justify-content:space-between;font-size:.8rem;opacity:.65;margin-top:.5rem;flex-wrap:wrap;gap:.4rem}
+@media(max-width:860px){.tm-ctl,.tm-hero{grid-template-columns:1fr}.tm-big{font-size:2.5rem}}
+</style></head>
+<body><header class="nav" id="nav"></header>
+<main class="page"><div class="wrap"><section class="section">
+<div class="section-head"><div><div class="eyebrow">Time Machine</div><h2>What if you had bought earlier?</h2></div></div>
+<p class="hint" style="margin:0">Pick an amount and a moment. See what that buy would be worth right now, priced from real on-chain trades.</p>
+<div class="card tm-ctl"><div><label>Amount in USD</label><input id="tm-amt" type="number" min="1" value="100"></div>
+<div><label>Bought</label><div class="tm-tabs" id="tm-when"><button class="on" data-w="launch">At launch</button><button data-w="7d">7d ago</button><button data-w="24h">24h ago</button><button data-w="1h">1h ago</button></div></div>
+<div><label>Coin</label><div class="tm-tabs" id="tm-pick"></div></div></div>
+<div class="tm-hero" id="tm-hero"><div class="card empty">Reading the chain…</div></div>
+<h3 style="font-family:Outfit,system-ui;margin:1.5rem 0 .75rem">Every coin, same buy</h3>
+<div class="tm-list" id="tm-list"></div>
+</section></div></main>
+<footer class="footer" id="footer"></footer>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const { api, esc, fmtUsd, href, short } = GLIA;
+  const $ = s => document.querySelector(s);
+  let data = null, when = 'launch', pick = null;
+  const lbl = { launch: 'at launch', '7d': '7 days ago', '24h': '24 hours ago', '1h': '1 hour ago' };
+  const from = c => c.points[when] || c.points.launch;
+  const mult = c => c.nowEth / from(c);
+  const mx = m => m >= 10 ? m.toFixed(0) + 'x' : m.toFixed(2) + 'x';
+  function spark(c, h, w = 300) {
+    const s = c.spark, t0 = s[0][0], t1 = s[s.length - 1][0] || t0 + 1, ps = s.map(p => p[1]), lo = Math.min(...ps), hi = Math.max(...ps) || 1;
+    const X = t => ((t - t0) / (t1 - t0 || 1)) * w, Y = p => h - 4 - ((p - lo) / (hi - lo || 1)) * (h - 8);
+    const d = s.map((p, i) => (i ? 'L' : 'M') + X(p[0]).toFixed(1) + ' ' + Y(p[1]).toFixed(1)).join(' ');
+    const up = mult(c) >= 1, col = up ? '#16a34a' : '#0b1a33', id = 'g' + c.token.slice(2, 8) + h;
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="height:${h}px"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".25"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs><path d="${d} L${w} ${h} L0 ${h} Z" fill="url(#${id})"/><path d="${d}" fill="none" stroke="${col}" stroke-width="2.2" vector-effect="non-scaling-stroke"/></svg>`;
+  }
+  function render() {
+    if (!data) return; const amt = Math.max(0, Number($('#tm-amt').value) || 0), coins = data.coins;
+    if (!coins.length) { $('#tm-hero').innerHTML = `<div class="card empty">No trades yet. <a href="${href('/launch')}">Launch a coin →</a></div>`; return; }
+    if (!pick || !coins.find(c => c.token === pick)) pick = coins[0].token;
+    $('#tm-pick').innerHTML = coins.map(c => `<button data-t="${c.token}" class="${c.token === pick ? 'on' : ''}">$${esc(c.symbol || short(c.token))}</button>`).join('');
+    const c = coins.find(x => x.token === pick), m = mult(c), peak = c.peakEth / from(c);
+    $('#tm-hero').innerHTML = `<div class="card"><span class="hint">${fmtUsd(amt)} of $${esc(c.symbol)} bought ${lbl[when]}${c.points[when] ? '' : ' (first trade)'} is worth</span>
+      <div class="tm-big">${fmtUsd(amt * m)}</div><span class="tm-mult ${m >= 1 ? '' : 'dn'}">${mx(m)}</span>
+      <div class="tm-meta" style="margin-top:1rem"><span>At the peak: ${fmtUsd(amt * peak)} (${mx(peak)})</span><span>Price now ${fmtUsd(c.nowEth * data.ethUsd)}</span></div>
+      <a class="btn" style="margin-top:1.1rem;display:inline-block" href="${href('/token/' + c.token)}">Trade $${esc(c.symbol)}</a></div>
+      <div class="card"><span class="hint">$${esc(c.symbol)} price since launch</span>${spark(c, 210, 600)}<div class="tm-meta"><span>Launched ${new Date(c.firstAt * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span><span>Now</span></div></div>`;
+    $('#tm-list').innerHTML = [...coins].sort((a, b) => mult(b) - mult(a)).map(x => { const k = mult(x); return `<div class="card tm-c ${x.token === pick ? 'on' : ''}" data-t="${x.token}"><div class="hd"><img src="${esc(href('/api/token/' + x.token + '/logo'))}" alt="" onerror="this.style.visibility='hidden'"><div><b>$${esc(x.symbol || short(x.token))}</b><div class="hint">${esc(x.name || '')}</div></div></div>
+      ${spark(x, 60)}<div class="v"><strong>${fmtUsd(amt * k)}</strong><span class="tm-mult ${k >= 1 ? '' : 'dn'}">${mx(k)}</span></div></div>`; }).join('');
+  }
+  const choose = e => { const b = e.target.closest('[data-t]'); if (!b) return; pick = b.dataset.t; render(); scrollTo({ top: 0, behavior: 'smooth' }); };
+  $('#tm-pick').onclick = choose; $('#tm-list').onclick = choose; $('#tm-amt').oninput = render;
+  $('#tm-when').onclick = e => { const b = e.target.closest('button'); if (!b) return; when = b.dataset.w; document.querySelectorAll('#tm-when button').forEach(x => x.classList.toggle('on', x === b)); render(); };
+  async function load() { try { data = await api('timemachine'); render(); } catch (e) { $('#tm-hero').innerHTML = `<div class="card empty">${esc(e.message || 'Could not load the Time Machine.')}</div>`; } }
+  load(); setInterval(load, 20000);
+});
+</script></body></html>

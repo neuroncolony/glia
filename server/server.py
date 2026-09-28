@@ -42,7 +42,7 @@ def get_session(tok):
     if s and store.now() - s['at'] < 30 * 86400: return s
     return None
 
-PAGES = {'': 'index.html', 'explore': 'explore.html', 'live': 'live.html', 'portfolio': 'portfolio.html', 'race': 'race.html', 'whales': 'whales.html', 'compare': 'compare.html', 'heatmap': 'heatmap.html', 'diamonds': 'diamonds.html', 'launch': 'launch.html', 'models': 'models.html', 'chat': 'chat.html', 'keys': 'keys.html', 'docs': 'docs.html', 'terms': 'terms.html', 'privacy': 'privacy.html', 'risk': 'risk.html', 'article': 'article.html',
+PAGES = {'': 'index.html', 'explore': 'explore.html', 'live': 'live.html', 'portfolio': 'portfolio.html', 'race': 'race.html', 'whales': 'whales.html', 'compare': 'compare.html', 'heatmap': 'heatmap.html', 'diamonds': 'diamonds.html', 'timemachine': 'timemachine.html', 'launch': 'launch.html', 'models': 'models.html', 'chat': 'chat.html', 'keys': 'keys.html', 'docs': 'docs.html', 'terms': 'terms.html', 'privacy': 'privacy.html', 'risk': 'risk.html', 'article': 'article.html',
          'leaderboard': 'leaderboard.html', 'scoreboard': 'scoreboard.html', 'offspring': 'offspring.html', 'takes': 'takes.html', 'token': 'token.html', 'agora': 'agora.html', 'note': 'note.html'}
 
 class H(BaseHTTPRequestHandler):
@@ -139,6 +139,7 @@ class H(BaseHTTPRequestHandler):
             try: since = int(q.get('since', 0))
             except (TypeError, ValueError): since = 0
             return self.send(200, {'events': holders.recent_events(pool.events(400), since, pool.TOKENS)})
+        if p == 'timemachine': return self.send(200, pool.time_machine())
         if p == 'diamonds': return self.send(200, holders.diamonds(pool.TOKENS, pool.TRADES, pool.eth_usd()))
         if p == 'holders':
             rec = pool.TOKENS.get(q.get('token', '').lower())

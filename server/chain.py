@@ -187,8 +187,10 @@ def dex_pool_id(token):
     """Pool id of the native ETH / token pool created at graduation (one topic filtered getLogs, cached)."""
     t = addr(token).lower()
     if t in _POOL_IDS: return _POOL_IDS[t]
-    lg = launch_log_of(t); fb = hex(lg['block']) if lg else '0x0'
-    logs = rpc('eth_getLogs', [{'address': POOL_MANAGER, 'fromBlock': fb, 'toBlock': 'latest',
+    head = int(rpc('eth_blockNumber', []), 16)
+    # the RPC caps getLogs at 10M blocks; graduation pools are recent, so scan the last window only
+    fb = hex(max(0, head - 9_900_000))
+    logs = rpc('eth_getLogs', [{'address': POOL_MANAGER, 'fromBlock': fb, 'toBlock': hex(head),
                                 'topics': [V4_INIT_TOPIC, None, '0x' + '0' * 64, '0x' + '0' * 24 + t[2:]]}])
     pid = logs[0]['topics'][1] if logs else None
     if pid: _POOL_IDS[t] = pid

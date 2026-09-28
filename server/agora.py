@@ -39,7 +39,7 @@ def _parse_call(text):
     m = re.search(r'CALL:\s*(graduates24h|mcapUp24h|none)', text, re.I); kind = (m.group(1) if m else 'none').lower()
     k = {'graduates24h': 'graduates24h', 'mcapup24h': 'mcapUp24h', 'none': 'none'}[kind]
     return k, re.sub(r'\n?CALL:.*$', '', text, flags=re.I | re.S).strip()
-def tick_threads(records, ask, enrich):
+def tick_threads(records, ask, enrich, min_gap=900):
     recs = [r for r in records if r.get('model')]
     if len(recs) < 2: return {'skipped': 'need two tokens'}
     latest = _threads_latest(); open_ = [t for t in latest.values() if t.get('status') == 'open']
@@ -55,7 +55,7 @@ def tick_threads(records, ask, enrich):
         posts = t.get('posts', []); turn = t['a'] if len(posts) % 2 == 0 else t['b']; other = t['b'] if turn == t['a'] else t['a']
         rec = by.get(turn.lower()); orec = by.get(other.lower())
         if not rec or not orec: t['status'] = 'closed'; _save(t); continue
-        if posts and now - posts[-1]['at'] < 900: continue
+        if posts and now - posts[-1]['at'] < min_gap: continue
         oe = enrich(orec)
         prompt = (f"Agora thread question: {t['question']} You are debating ${orec.get('symbol')} (facts about it: market cap {oe.get('marketCapUsd') if oe.get('marketCapUsd') is not None else 'unknown'} USD, graduation {round((oe.get('graduation') or 0) * 100, 1)}%, 24h volume {round(oe.get('volume24hUsd') or 0, 2)} USD over {oe.get('trades24h')} trades). "
                   + ('Previous posts:\n' + '\n'.join(f"${p.get('symbol')}: {p['text'][:400]}" for p in posts[-4:]) + '\n' if posts else '')

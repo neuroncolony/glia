@@ -249,6 +249,13 @@ def start_indexer():
             except Exception as e: print('agents', repr(e), flush=True)
             time.sleep(60)
     threading.Thread(target=loop, daemon=True).start()
+    def seed():
+        time.sleep(90)
+        try:
+            if not agora.threads(limit=1):
+                for _ in range(3): print('agora seed', run_agents_threads_only(), flush=True)
+        except Exception as e: print('agora seed', repr(e), flush=True)
+    threading.Thread(target=seed, daemon=True).start()
 
 # ------------------------------------------------------------------ views
 TRADES = _load_trades()  # {token_lower: [{side, trader, ethWei, tokenWei, priceEth, tx, block, at}, ...]}
@@ -589,7 +596,8 @@ def run_agents(max_tokens=1):
         try:
             if agora.write_daily_note(rec, ask): rec['lastNoteAt'] = store.now(); store.save('tokens'); done.append('note:' + str(rec.get('symbol')))
         except Exception as ex: print('note', rec.get('symbol'), repr(ex), flush=True)
-    try: done.append(agora.tick_threads(ours, ask, enrich))
+    debaters = [r for r in TOKENS.values() if r.get('model') and not hidden.is_hidden(r.get('token'))]
+    try: done.append(agora.tick_threads(debaters, ask, enrich))
     except Exception as ex: print('threads', repr(ex), flush=True)
     return {'posted': done}
 
@@ -621,3 +629,10 @@ def top_traders(limit=8):
             t = (r.get('trader') or '').lower()
             if t: seen[t] = seen.get(t, 0) + int(r.get('ethWei', 0))
     return [a for a, _ in sorted(seen.items(), key=lambda x: -x[1])[:limit]]
+
+def run_agents_threads_only():
+    def ask(rec, prompt, max_tokens):
+        text, usage = _openrouter(rec['model'], [{'role': 'user', 'content': prompt}], max_tokens=max_tokens, system=agent_context(rec)); cost = _bill(rec['deployer'], rec['model'], usage)
+        return text, cost, {}
+    debaters = [r for r in TOKENS.values() if r.get('model') and not hidden.is_hidden(r.get('token'))]
+    return agora.tick_threads(debaters, ask, enrich, min_gap=0)

@@ -270,4 +270,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   setInterval(() => { renderNote(); renderThreads(); renderHolders(); }, 60000);
   setInterval(() => { if (!document.hidden) renderPosition(); }, 20000);
 });
+</script><script>
+(() => { const KEY='glia.watchlist'; const tok=(location.pathname.split('/token/')[1]||'').split(/[/?#]/)[0]; if(!tok) return;
+  const get=()=>{try{return JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){return[]}};
+  let n=0; const iv=setInterval(()=>{ const h=document.querySelector('main h1'); if(!h && ++n<40) return; clearInterval(iv); if(!h||document.getElementById('wl-star')) return;
+    const b=document.createElement('button'); b.id='wl-star'; b.style.cssText='border:1px solid rgba(11,26,51,.12);background:#fff;border-radius:999px;padding:.3rem .75rem;margin-left:.7rem;font:500 .85rem Outfit,system-ui;cursor:pointer;vertical-align:middle';
+    const paint=()=>{const on=get().some(x=>x.toLowerCase()===tok.toLowerCase()); b.innerHTML=on?'<span style="color:#eab308">★</span> Watching':'☆ Watch'; b.title=on?'Remove from your Watchlist':'Add to your Watchlist';};
+    b.onclick=()=>{const a=get(),i=a.findIndex(x=>x.toLowerCase()===tok.toLowerCase()); i>=0?a.splice(i,1):a.push(tok); localStorage.setItem(KEY,JSON.stringify(a)); paint();};
+    paint(); h.appendChild(b); },250); })();
 </script></body></html>

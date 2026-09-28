@@ -42,7 +42,7 @@ def get_session(tok):
     if s and store.now() - s['at'] < 30 * 86400: return s
     return None
 
-PAGES = {'': 'index.html', 'explore': 'explore.html', 'live': 'live.html', 'portfolio': 'portfolio.html', 'race': 'race.html', 'whales': 'whales.html', 'compare': 'compare.html', 'heatmap': 'heatmap.html', 'diamonds': 'diamonds.html', 'timemachine': 'timemachine.html', 'checkup': 'checkup.html', 'creators': 'creators.html', 'launch': 'launch.html', 'models': 'models.html', 'chat': 'chat.html', 'keys': 'keys.html', 'docs': 'docs.html', 'terms': 'terms.html', 'privacy': 'privacy.html', 'risk': 'risk.html', 'article': 'article.html',
+PAGES = {'': 'index.html', 'explore': 'explore.html', 'live': 'live.html', 'portfolio': 'portfolio.html', 'race': 'race.html', 'whales': 'whales.html', 'compare': 'compare.html', 'heatmap': 'heatmap.html', 'diamonds': 'diamonds.html', 'timemachine': 'timemachine.html', 'checkup': 'checkup.html', 'creators': 'creators.html', 'watchlist': 'watchlist.html', 'launch': 'launch.html', 'models': 'models.html', 'chat': 'chat.html', 'keys': 'keys.html', 'docs': 'docs.html', 'terms': 'terms.html', 'privacy': 'privacy.html', 'risk': 'risk.html', 'article': 'article.html',
          'leaderboard': 'leaderboard.html', 'scoreboard': 'scoreboard.html', 'offspring': 'offspring.html', 'takes': 'takes.html', 'token': 'token.html', 'agora': 'agora.html', 'note': 'note.html'}
 
 class H(BaseHTTPRequestHandler):

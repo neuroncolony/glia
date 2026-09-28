@@ -390,11 +390,10 @@ def treasury_balance():
 def escrow_claimable(recipient):
     """ETH the pons fee escrow owes `recipient`. Trades pay the 2% creator tax into the curve; sweepFees moves it here; claim() pays it out."""
     return call(ESCROW, 'balanceOf(address)', ['address'], [addr(recipient)])[0]
-CLAIMER = '0xdA681CbB6AFfd78259df53B5Db1FA33A50487B30'  # the only wallet allowed to claim, hardcoded on purpose
 def claim_tx(sender=None):
     """Escrow claim(). Pays msg.sender its balance, so it must be signed by the treasury wallet itself.
-    The server additionally refuses to build the tx for anyone but CLAIMER."""
+    The server refuses to build the tx for anyone but the treasury wallet."""
     t = treasury()
     if not t: raise ChainError('GLIA_TREASURY is not configured.')
-    if (sender or '').lower() != CLAIMER.lower(): raise ChainError('Only the treasury owner wallet can claim.')
+    if (sender or '').lower() != t.lower(): raise ChainError('Connect the treasury wallet to claim.')
     return {'tx': {'to': to_checksum_address(ESCROW), 'data': calldata('claim()'), 'value': '0x0', 'chainId': CHAIN_ID}, 'claimTo': t, 'claimableWei': str(escrow_claimable(t))}

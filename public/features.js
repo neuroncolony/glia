@@ -22,7 +22,7 @@
   .gl-card{display:block;padding:14px;border-radius:14px;border:1px solid var(--line,rgba(10,10,10,.08));background:var(--card,rgba(255,255,255,.7));text-decoration:none;color:inherit;transition:transform .15s,border-color .15s}
   .gl-card:hover{transform:translateY(-2px);border-color:var(--accent,#00b543)}
   .gl-card .r{display:flex;align-items:center;gap:10px}.gl-card .rank{font-size:11px;color:var(--muted,#9aa);margin-left:auto}
-  .gl-card img,.gl-card .ph{width:36px;height:36px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#e3e5e9,#c9cdd4);flex:none}
+  .gl-lg{position:relative;width:36px;height:36px;border-radius:50%;overflow:hidden;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,#eef7f1,#cfe9d9);border:1px solid rgba(11,26,51,.08)}.gl-lg b{font-family:Outfit,system-ui;font-size:15px;color:#0f7a3a}.gl-lg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}.gl-grad{color:#0f7a3a;font-weight:600}
   .gl-card .nm{font-weight:600}.gl-card .sy{font-size:12px;color:var(--muted,#9aa)}
   .gl-card dl{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin:12px 0 0;font-size:12px}.gl-card dt{color:var(--muted,#9aa)}.gl-card dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
   .gl-bar{height:4px;border-radius:4px;background:rgba(10,10,10,.08);margin-top:10px;overflow:hidden}.gl-bar i{display:block;height:100%;background:var(--accent,#00b543)}
@@ -82,9 +82,11 @@
       const { esc, href, fmtUsd } = G();
       if (!tokens || !tokens.length) { grid.innerHTML = `<div class="empty">No coins yet. <a href="${href('/launch')}">Launch the first one →</a></div>`; return; }
       grid.innerHTML = tokens.slice(0, 8).map((t, i) => {
-        const g = gradOf(t), logo = t.logo ? `<img src="${esc(t.logo)}" alt="">` : `<span class="ph"></span>`;
+        const grad = t.status === 'Graduated', g = grad ? 1 : gradOf(t), mc = usdOf(t);
+        const ini = esc(((t.symbol || t.name || '?')[0] || '?').toUpperCase());
+        const logo = `<span class="gl-lg"><img src="${esc(href('/api/token/' + t.token + '/logo'))}" alt="" loading="lazy" onerror="this.remove()"><b>${ini}</b></span>`;
         return `<a class="gl-card" href="${href('/token/' + t.token)}"><div class="r">${logo}<div><div class="nm">${esc(t.name || '?')}</div><div class="sy">${esc(t.symbol || '')} · ${esc(shortModel(t.model || t.modelName))}</div></div><span class="rank">#${i + 1}</span></div>
-        <dl><dt>Market cap</dt><dd>${fmtUsd(usdOf(t))}</dd><dt>24h volume</dt><dd>${fmtUsd(t.volume24hUsd || 0)}</dd><dt>Curve</dt><dd>${Math.round(g * 100)}%</dd><dt>Trades 24h</dt><dd>${t.trades24h || 0}</dd></dl><div class="gl-bar"><i style="width:${Math.round(g * 100)}%"></i></div></a>`;
+        <dl><dt>Market cap</dt><dd>${mc ? fmtUsd(mc) : (grad ? 'On DEX' : 'New')}</dd><dt>24h volume</dt><dd>${fmtUsd(t.volume24hUsd || 0)}</dd><dt>Curve</dt><dd>${grad ? '<span class="gl-grad">Graduated</span>' : Math.round(g * 100) + '%'}</dd><dt>Trades 24h</dt><dd>${t.trades24h || 0}</dd></dl><div class="gl-bar"><i style="width:${Math.round(g * 100)}%"></i></div></a>`;
       }).join('');
     }).catch(() => { grid.innerHTML = ''; });
     sec.querySelectorAll('.gl-tabs button').forEach(b => b.addEventListener('click', () => { sec.querySelectorAll('.gl-tabs button').forEach(x => x.classList.toggle('on', x === b)); render(b.dataset.s); }));

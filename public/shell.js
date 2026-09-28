@@ -6,7 +6,7 @@ window.GLIA = (() => {
 
   const BRAND = { name: 'glia', display: 'Glia', symbol: 'GLIA' };
   const CHAIN = { id: 4663, hex: '0x1237', name: 'Robinhood Chain', rpc: 'https://rpc.mainnet.chain.robinhood.com', explorer: 'https://robinhoodchain.blockscout.com' };
-  const NAV = [['/explore','Explore'],['/live','Live'],['/models','Models'],['/chat','Chat'],['/keys','API'],['/docs','Docs']];
+  const NAV = [['/explore','Explore'],['/live','Live'],['/portfolio','Portfolio'],['/models','Models'],['/chat','Chat'],['/keys','API'],['/docs','Docs']];
   const base = new URL(document.querySelector('base')?.href || (location.pathname.match(/^\/preview\/[^/]+\//)?.[0] || '/'), location.origin);
   const href = p => new URL(p.replace(/^\//,''), base).pathname;
   const $ = (s, r=document) => r.querySelector(s);

@@ -592,3 +592,32 @@ def run_agents(max_tokens=1):
     try: done.append(agora.tick_threads(ours, ask, enrich))
     except Exception as ex: print('threads', repr(ex), flush=True)
     return {'posted': done}
+
+def portfolio(addr):
+    """Per wallet positions built from indexed on-chain trades: cost, proceeds, held tokens, value, PnL."""
+    a = (addr or '').lower(); px = eth_usd() or 0; out = []
+    for tk, rows in TRADES.items():
+        mine = [r for r in rows if (r.get('trader') or '').lower() == a]
+        if not mine: continue
+        rec = TOKENS.get(tk, {})
+        last = max(rows, key=lambda r: r.get('at', 0)).get('priceEth') or rec.get('priceEth') or 0
+        bought = sum(int(r.get('ethWei', 0)) for r in mine if r.get('side') == 'buy') / 1e18
+        sold = sum(int(r.get('ethWei', 0)) for r in mine if r.get('side') == 'sell') / 1e18
+        held = sum((1 if r.get('side') == 'buy' else -1) * int(r.get('tokenWei', 0)) for r in mine) / 1e18
+        held = max(held, 0.0); value = held * last; pnl = value + sold - bought
+        out.append({'token': rec.get('token', tk), 'symbol': rec.get('symbol'), 'name': rec.get('name'), 'official': bool(rec.get('official')),
+                    'trades': len(mine), 'buys': sum(1 for r in mine if r.get('side') == 'buy'), 'sells': sum(1 for r in mine if r.get('side') == 'sell'),
+                    'boughtEth': bought, 'soldEth': sold, 'held': held, 'priceEth': last, 'valueEth': value, 'pnlEth': pnl,
+                    'pnlPct': (pnl / bought * 100) if bought else None, 'firstAt': min(r.get('at', 0) for r in mine), 'lastAt': max(r.get('at', 0) for r in mine)})
+    out.sort(key=lambda p: -p['valueEth'])
+    tot = {k: sum(p[k] for p in out) for k in ('boughtEth', 'soldEth', 'valueEth', 'pnlEth')}
+    tot['pnlPct'] = (tot['pnlEth'] / tot['boughtEth'] * 100) if tot['boughtEth'] else None
+    return {'address': addr, 'positions': out, 'totals': tot, 'ethUsd': px}
+
+def top_traders(limit=8):
+    seen = {}
+    for rows in TRADES.values():
+        for r in rows:
+            t = (r.get('trader') or '').lower()
+            if t: seen[t] = seen.get(t, 0) + int(r.get('ethWei', 0))
+    return [a for a, _ in sorted(seen.items(), key=lambda x: -x[1])[:limit]]

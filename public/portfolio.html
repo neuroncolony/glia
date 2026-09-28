@@ -1,0 +1,48 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('glia.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{BRAND}} · Portfolio</title><meta name="description" content="{{DESCRIPTION}}">
+<link rel="stylesheet" href="static/styles.css"><script src="static/shell.js" defer></script><script src="static/features.js" defer></script>
+<style>
+.pf-search{display:flex;gap:.6rem;margin:1rem 0 1.25rem}.pf-search input{flex:1;font:inherit;padding:.8rem 1rem;border-radius:14px;border:1px solid rgba(11,26,51,.12);background:rgba(255,255,255,.75)}
+.pf-tot{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1rem}.pf-tot .card{padding:1rem 1.1rem}.pf-tot b{display:block;font-size:1.5rem;margin-top:.3rem;font-family:Outfit,system-ui}
+.up{color:#16a34a}.down{color:#dc2626}.pf-row td{vertical-align:middle}.pf-tok{display:flex;align-items:center;gap:.6rem}.pf-tok img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.pf-chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem}.pf-chips button{font:inherit;font-size:.8rem;padding:.35rem .7rem;border-radius:999px;border:1px solid rgba(11,26,51,.12);background:rgba(255,255,255,.7);cursor:pointer}
+@media(max-width:760px){.pf-tot{grid-template-columns:repeat(2,1fr)}}
+</style></head>
+<body><header class="nav" id="nav"></header>
+<main class="page"><div class="wrap"><section class="section">
+<div class="section-head"><div><div class="eyebrow">Portfolio</div><h2>Every position, one view</h2></div></div>
+<p class="hint" style="margin:0">Paste any wallet or connect yours. Cost, value and PnL for every Glia coin, straight from on-chain trades.</p>
+<form class="pf-search" id="pf-form"><input id="pf-addr" placeholder="0x wallet address" autocomplete="off" spellcheck="false"><button class="btn" type="submit">View</button><button class="btn" type="button" id="pf-me" style="background:#fff;color:#0b1a33;border:1px solid rgba(11,26,51,.14)">My wallet</button></form>
+<div id="pf-chips-wrap" class="hint">Top traders<div class="pf-chips" id="pf-chips"></div></div>
+<div id="pf-out" style="margin-top:1.25rem"></div>
+</section></div></main>
+<footer class="footer" id="footer"></footer>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const { api, esc, fmtUsd, href, short, state } = GLIA;
+  const $ = s => document.querySelector(s), out = $('#pf-out');
+  const compact = n => n >= 1e9 ? (n/1e9).toFixed(2)+'B' : n >= 1e6 ? (n/1e6).toFixed(2)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : Number(n).toFixed(0);
+  let ethUsd = 0;
+  const u = e => ethUsd ? fmtUsd(e * ethUsd) : e.toFixed(4) + ' ETH';
+  const sign = (e, pct) => `<span class="${e >= 0 ? 'up' : 'down'}">${e >= 0 ? '+' : '-'}${u(Math.abs(e)).replace('-','')}${pct == null ? '' : ' (' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%)'}</span>`;
+  async function load(addr) {
+    addr = (addr || '').trim(); if (!/^0x[0-9a-fA-F]{40}$/.test(addr)) { GLIA.toast('Enter a valid wallet address.'); return; }
+    $('#pf-addr').value = addr; history.replaceState(null, '', location.pathname + '?address=' + addr);
+    out.innerHTML = '<div class="empty">Reading the chain…</div>';
+    try {
+      const d = await api('/api/portfolio?address=' + addr); ethUsd = d.ethUsd || 0; const t = d.totals;
+      if (!d.positions.length) { out.innerHTML = `<div class="card"><b>${esc(short(addr))}</b><p class="hint" style="margin:.4rem 0 0">No Glia trades from this wallet yet. <a href="${href('/explore')}">Find a coin</a> to start.</p></div>`; return; }
+      out.innerHTML = `<div class="card" style="margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center"><div><div class="eyebrow">Wallet</div><a class="mono" target="_blank" rel="noopener" href="${GLIA.CHAIN.explorer}/address/${esc(addr)}">${esc(short(addr))} ↗</a></div><div class="hint">${d.positions.length} coin${d.positions.length>1?'s':''} · ${d.positions.reduce((a,p)=>a+p.trades,0)} trades</div></div>
+      <div class="pf-tot"><div class="card"><span class="hint">Value now</span><b>${u(t.valueEth)}</b></div><div class="card"><span class="hint">Total PnL</span><b>${sign(t.pnlEth, t.pnlPct)}</b></div><div class="card"><span class="hint">Put in</span><b>${u(t.boughtEth)}</b></div><div class="card"><span class="hint">Taken out</span><b>${u(t.soldEth)}</b></div></div>
+      <div class="table-wrap card" style="padding:0"><table class="table"><thead><tr><th>Coin</th><th>Holding</th><th>Value</th><th>Put in</th><th>Taken out</th><th>PnL</th><th>Trades</th></tr></thead><tbody>
+      ${d.positions.map(p => `<tr class="pf-row"><td><a class="pf-tok" href="${href('/token/' + p.token)}"><img src="${esc(href('/api/token/' + p.token + '/logo'))}" alt="" onerror="this.style.visibility='hidden'"><b>$${esc(p.symbol || short(p.token))}</b></a></td><td>${compact(p.held)}</td><td>${u(p.valueEth)}</td><td>${u(p.boughtEth)}</td><td>${u(p.soldEth)}</td><td>${sign(p.pnlEth, p.pnlPct)}</td><td>${p.buys} buy · ${p.sells} sell</td></tr>`).join('')}
+      </tbody></table></div>`;
+    } catch (e) { out.innerHTML = `<div class="empty">${esc(e.message || 'Could not load this wallet.')}</div>`; }
+  }
+  $('#pf-form').onsubmit = e => { e.preventDefault(); load($('#pf-addr').value); };
+  $('#pf-me').onclick = async () => { try { if (!state.address) await GLIA.openWalletModal(); load(state.address); } catch (e) {} };
+  document.addEventListener('glia:wallet', e => { if (!$('#pf-addr').value) load(e.detail.address); });
+  try { const r = await api('/api/traders?limit=6'); $('#pf-chips').innerHTML = r.traders.map(a => `<button data-a="${esc(a)}">${esc(short(a))}</button>`).join(''); $('#pf-chips').onclick = e => { const b = e.target.closest('[data-a]'); if (b) load(b.dataset.a); }; if (!r.traders.length) $('#pf-chips-wrap').style.display='none'; } catch (e) { $('#pf-chips-wrap').style.display='none'; }
+  const q = new URLSearchParams(location.search).get('address'); if (q) load(q); else if (state.address) load(state.address);
+});
+</script></body></html>

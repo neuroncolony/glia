@@ -42,7 +42,7 @@ def get_session(tok):
     if s and store.now() - s['at'] < 30 * 86400: return s
     return None
 
-PAGES = {'': 'index.html', 'explore': 'explore.html', 'live': 'live.html', 'launch': 'launch.html', 'models': 'models.html', 'chat': 'chat.html', 'keys': 'keys.html', 'docs': 'docs.html', 'terms': 'terms.html', 'privacy': 'privacy.html', 'risk': 'risk.html', 'article': 'article.html',
+PAGES = {'': 'index.html', 'explore': 'explore.html', 'live': 'live.html', 'portfolio': 'portfolio.html', 'launch': 'launch.html', 'models': 'models.html', 'chat': 'chat.html', 'keys': 'keys.html', 'docs': 'docs.html', 'terms': 'terms.html', 'privacy': 'privacy.html', 'risk': 'risk.html', 'article': 'article.html',
          'leaderboard': 'leaderboard.html', 'scoreboard': 'scoreboard.html', 'offspring': 'offspring.html', 'takes': 'takes.html', 'token': 'token.html', 'agora': 'agora.html', 'note': 'note.html'}
 
 class H(BaseHTTPRequestHandler):
@@ -103,6 +103,11 @@ class H(BaseHTTPRequestHandler):
             if not b: return self.error(404, 'No such logo.')
             return self.send(200, body=b, ctype=mime, headers={'Cache-Control': 'public, max-age=31536000, immutable'})
         if p == 'stats': return self.send(200, pool.stats())
+        if p == 'portfolio':
+            a = (q.get('address') or '').strip()
+            if not re.fullmatch(r'0x[0-9a-fA-F]{40}', a): return self.error(400, 'Enter a valid wallet address.')
+            return self.send(200, pool.portfolio(a))
+        if p == 'traders': return self.send(200, {'traders': pool.top_traders(int(q.get('limit', 8)))})
         if p == 'owner':
             sess = self.session(); t = (chain.treasury() or '').lower()
             if not sess or not t or sess['address'].lower() != t: return self.send(403, {'error': 'Treasury wallet only.'})

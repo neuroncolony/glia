@@ -440,16 +440,16 @@ window.GLIA = (() => {
   function officialCard(o) {
     const inner = `<div class="mkt-head">${officialLogo()}<div class="mkt-name"><span class="n">${esc(o.name)}</span><span class="chip">${esc(o.symbol)}</span></div></div>
       <div class="mkt-sub"><span class="mono">${o.live ? '' : 'Launching soon'}</span><span class="chip official">Paired to ${esc(o.pairedWith)}</span></div>
-      <div class="mkt-stats"><span>Price <b>n/a</b></span><span>24h vol <b>n/a</b></span></div>
+      <div class="mkt-stats"><span>Price <b>soon</b></span><span>24h vol <b>soon</b></span></div>
       <div class="mkt-grad"><span class="bar"><i style="width:0%"></i></span><span class="mono faint">0%</span></div>
-      <div class="mkt-foot"><span class="chip">Official</span><span class="faint">${o.link ? `<a href="${esc(o.link)}" target="_blank" rel="noopener">link ↗</a>` : 'reserved'}</span></div>`;
+      <div class="mkt-foot"><span class="chip">Official</span><span class="faint">${o.link ? `<a href="${esc(o.link)}" target="_blank" rel="noopener">link ↗</a>` : 'launching soon'}</span></div>`;
     return `<div class="mkt-card official-slot placeholder">${inner}</div>`;
   }
   function officialRow(cols) {
     // cols = total column count of the table; first cell is the token cell, second is model/backs, remaining are filled with n/a except the last which gets the chip
     const o = _officialSync || { name: 'Glia', symbol: 'GLIA', pairedWith: 'Glia' };
     const cells = [`<td><div class="tok">${officialLogo()}<span><span class="n">${esc(o.name)}</span><br><span class="s">${esc(o.symbol)} · paired to ${esc(o.pairedWith)}</span></span></div></td>`, `<td><span class="chip official">Official</span></td>`];
-    for (let i = 2; i < cols - 1; i++) cells.push('<td class="num faint">n/a</td>');
+    for (let i = 2; i < cols - 1; i++) cells.push('<td class="num faint">soon</td>');
     cells.push('<td><span class="chip">Soon</span></td>');
     return `<tr class="official-row">${cells.join('')}</tr>`;
   }

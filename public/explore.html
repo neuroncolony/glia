@@ -63,8 +63,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         cards.innerHTML = officialCard(o);
         document.getElementById('rows').innerHTML = officialRow(8);
       } else {
-        cards.innerHTML = '<div class="empty" style="grid-column:1/-1">Nothing here. A token address is the only identifier that cannot be copied.</div>';
-        document.getElementById('rows').innerHTML = '<tr><td colspan="8"><div class="empty">Nothing here. A token address is the only identifier that cannot be copied.</div></td></tr>';
+        cards.innerHTML = '<div class="empty" style="grid-column:1/-1">No coins yet. <a href="/launch">Launch the first one →</a></div>';
+        document.getElementById('rows').innerHTML = '<tr><td colspan="8"><div class="empty">No coins yet. <a href="/launch">Launch the first one →</a></div></td></tr>';
       }
       return;
     }

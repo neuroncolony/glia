@@ -3,37 +3,37 @@
   const ready = f => document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', f) : f();
   const wait = (test, cb, tries = 60) => { const v = test(); if (v) return cb(v); if (tries > 0) setTimeout(() => wait(test, cb, tries - 1), 150); };
   const css = `
-  .gl-tape{position:relative;overflow:hidden;border-bottom:1px solid var(--line,rgba(255,255,255,.08));background:rgba(0,0,0,.25);backdrop-filter:blur(6px);font-size:12px;height:30px;display:flex;align-items:center}
+  .gl-tape{position:relative;overflow:hidden;border-bottom:1px solid var(--line,rgba(10,10,10,.08));background:rgba(255,255,255,.6);backdrop-filter:blur(20px) saturate(180%);font-size:12px;height:30px;display:flex;align-items:center}
   .gl-tape-track{display:flex;gap:28px;white-space:nowrap;animation:gltape 60s linear infinite;padding-left:100%}
   .gl-tape:hover .gl-tape-track{animation-play-state:paused}
   .gl-tape a{color:var(--muted,#9aa);text-decoration:none;display:inline-flex;gap:6px;align-items:center}
-  .gl-tape a:hover{color:var(--fg,#fff)}
-  .gl-tape .b{color:#54d97e;font-weight:600}.gl-tape .s{color:#e5484d;font-weight:600}
+  .gl-tape a:hover{color:var(--ink,#0a0a0a)}
+  .gl-tape .b{color:#00b543;font-weight:600}.gl-tape .s{color:#e5392a;font-weight:600}
   .gl-tape .lbl{position:absolute;left:0;top:0;bottom:0;z-index:2;display:flex;align-items:center;gap:6px;padding:0 12px;background:inherit;font-weight:600;letter-spacing:.04em;font-size:11px}
-  .gl-tape .dot{width:6px;height:6px;border-radius:50%;background:#54d97e;box-shadow:0 0 8px #54d97e;animation:glpulse 1.6s ease-in-out infinite}
+  .gl-tape .dot{width:6px;height:6px;border-radius:50%;background:#00b543;box-shadow:0 0 8px #00b543;animation:glpulse 1.6s ease-in-out infinite}
   @keyframes gltape{from{transform:translateX(0)}to{transform:translateX(-100%)}}
   @keyframes glpulse{50%{opacity:.35}}
   .gl-sec{margin:2.5rem 0}
   .gl-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1rem;gap:1rem}
-  .gl-head h2{margin:0;font-size:1.35rem}
-  .gl-tabs{display:flex;gap:6px}.gl-tabs button{background:transparent;border:1px solid var(--line,rgba(255,255,255,.12));color:var(--muted,#9aa);padding:5px 12px;border-radius:999px;cursor:pointer;font:inherit;font-size:12px}
-  .gl-tabs button.on{color:var(--fg,#fff);border-color:var(--accent,#54d97e);background:rgba(84,217,126,.1)}
+  .gl-head h2{margin:0;font-family:var(--head);font-weight:600;font-size:1.6rem;letter-spacing:-.01em}
+  .gl-tabs{display:flex;gap:6px}.gl-tabs button{background:transparent;border:1px solid var(--line,rgba(10,10,10,.12));color:var(--muted,#9aa);padding:5px 12px;border-radius:999px;cursor:pointer;font:inherit;font-size:12px}
+  .gl-tabs button.on{color:var(--ink,#0a0a0a);border-color:var(--accent,#00b543);background:rgba(0,181,67,.1)}
   .gl-hot{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-  .gl-card{display:block;padding:14px;border-radius:14px;border:1px solid var(--line,rgba(255,255,255,.08));background:var(--card,rgba(255,255,255,.03));text-decoration:none;color:inherit;transition:transform .15s,border-color .15s}
-  .gl-card:hover{transform:translateY(-2px);border-color:var(--accent,#54d97e)}
+  .gl-card{display:block;padding:14px;border-radius:14px;border:1px solid var(--line,rgba(10,10,10,.08));background:var(--card,rgba(255,255,255,.7));text-decoration:none;color:inherit;transition:transform .15s,border-color .15s}
+  .gl-card:hover{transform:translateY(-2px);border-color:var(--accent,#00b543)}
   .gl-card .r{display:flex;align-items:center;gap:10px}.gl-card .rank{font-size:11px;color:var(--muted,#9aa);margin-left:auto}
-  .gl-card img,.gl-card .ph{width:36px;height:36px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#2a3a4a,#16202a);flex:none}
+  .gl-card img,.gl-card .ph{width:36px;height:36px;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#e3e5e9,#c9cdd4);flex:none}
   .gl-card .nm{font-weight:600}.gl-card .sy{font-size:12px;color:var(--muted,#9aa)}
   .gl-card dl{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;margin:12px 0 0;font-size:12px}.gl-card dt{color:var(--muted,#9aa)}.gl-card dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
-  .gl-bar{height:4px;border-radius:4px;background:rgba(255,255,255,.08);margin-top:10px;overflow:hidden}.gl-bar i{display:block;height:100%;background:var(--accent,#54d97e)}
+  .gl-bar{height:4px;border-radius:4px;background:rgba(10,10,10,.08);margin-top:10px;overflow:hidden}.gl-bar i{display:block;height:100%;background:var(--accent,#00b543)}
   .gl-pool{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-  .gl-stat{padding:16px;border-radius:14px;border:1px solid var(--line,rgba(255,255,255,.08));background:var(--card,rgba(255,255,255,.03))}
-  .gl-stat .k{font-size:12px;color:var(--muted,#9aa)}.gl-stat .v{font-size:1.6rem;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
-  .gl-meter{grid-column:1/-1;height:10px;border-radius:10px;background:rgba(255,255,255,.06);overflow:hidden}.gl-meter i{display:block;height:100%;background:linear-gradient(90deg,#54d97e,#8be9b0);transition:width 1s}
-  .gl-share-btn{display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:1px solid var(--line,rgba(255,255,255,.14));background:rgba(255,255,255,.04);color:inherit;font:inherit;font-size:13px;padding:7px 14px;border-radius:999px}
-  .gl-share-btn:hover{border-color:var(--accent,#54d97e)}
-  .gl-modal{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;padding:20px}
-  .gl-modal .box{max-width:680px;width:100%;background:var(--bg,#0b0f14);border:1px solid var(--line,rgba(255,255,255,.1));border-radius:16px;padding:16px}
+  .gl-stat{padding:16px;border-radius:14px;border:1px solid var(--line,rgba(10,10,10,.08));background:var(--card,rgba(255,255,255,.7))}
+  .gl-stat .k{font-size:12px;color:var(--muted,#9aa)}.gl-stat .v{font-family:var(--head);font-size:1.8rem;font-weight:600;margin-top:4px;font-variant-numeric:tabular-nums}
+  .gl-meter{grid-column:1/-1;height:10px;border-radius:10px;background:rgba(10,10,10,.06);overflow:hidden}.gl-meter i{display:block;height:100%;background:linear-gradient(90deg,#00b543,#3ddc7a);transition:width 1s}
+  .gl-share-btn{display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:1px solid var(--line,rgba(10,10,10,.14));background:rgba(255,255,255,.04);color:inherit;font:inherit;font-size:13px;padding:7px 14px;border-radius:999px}
+  .gl-share-btn:hover{border-color:var(--accent,#00b543)}
+  .gl-modal{position:fixed;inset:0;z-index:9999;background:rgba(10,10,10,.35);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:20px}
+  .gl-modal .box{max-width:680px;width:100%;background:rgba(255,255,255,.92);backdrop-filter:blur(30px);box-shadow:var(--glass-shadow);border-radius:24px;padding:16px}
   .gl-modal canvas{width:100%;height:auto;border-radius:10px;display:block}
   .gl-modal .acts{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
   `;
@@ -102,20 +102,35 @@
   }
 
   // 3. share card on token pages
-  function drawCard(t, cv) {
+  const MARK_D = "M32.94 97.07C29.52 96.74 26.15 94.84 24.10 92.08C22.96 90.54 22.45 89.39 21.99 87.36C21.66 85.87 21.40 85.11 20.89 84.09C19.69 81.70 17.56 79.60 15.16 78.45C13.94 77.86 13.23 77.62 11.93 77.33C9.35 76.78 7.39 75.76 5.66 74.08C3.15 71.65 1.92 68.78 1.91 65.40C1.91 64.13 2.12 62.94 2.53 61.77C3.23 59.78 4.02 58.60 5.90 56.75C7.53 55.13 7.92 54.65 8.46 53.57C9.63 51.25 9.49 48.69 8.05 46.21C7.73 45.65 7.24 45.09 6.10 43.96C4.44 42.32 3.72 41.36 3.02 39.84C1.39 36.30 1.64 32.17 3.71 28.73C4.87 26.79 6.81 24.95 8.73 23.98C9.66 23.51 10.27 23.30 11.91 22.86C13.38 22.46 14.82 21.93 15.51 21.53C17.32 20.46 18.72 19.25 19.83 17.79C21.02 16.22 21.55 15.07 21.99 13.12C22.60 10.47 23.61 8.54 25.37 6.71C27.21 4.81 29.31 3.64 32.07 3.00C33.27 2.72 35.81 2.70 36.99 2.96C39.53 3.52 41.65 4.62 43.39 6.29C45.41 8.23 46.65 10.43 47.23 13.14C47.43 14.07 47.46 14.60 47.55 19.99C47.60 23.20 47.63 27.89 47.61 30.41C47.58 34.40 47.55 35.07 47.40 35.60C46.85 37.48 45.59 39.00 43.90 39.81C42.77 40.36 42.05 40.52 40.84 40.52C39.17 40.51 38.84 40.38 34.69 37.99C33.20 37.13 30.50 35.57 28.70 34.54C26.90 33.50 25.27 32.56 25.08 32.44C24.88 32.32 24.67 32.23 24.60 32.23C24.50 32.23 24.47 33.00 24.47 35.78L24.47 39.33L25.60 39.98C26.23 40.33 27.03 40.80 27.39 41.01C27.75 41.23 29.16 42.05 30.51 42.82C35.17 45.49 35.45 45.69 36.24 46.87C37.02 48.04 37.21 48.73 37.20 50.30C37.20 51.83 37.05 52.36 36.30 53.48C35.60 54.53 34.97 55.02 32.51 56.42C31.27 57.12 28.97 58.44 27.39 59.35L24.52 61.00L24.50 64.55C24.47 67.38 24.49 68.09 24.60 68.05C24.67 68.02 26.08 67.22 27.74 66.26C29.41 65.31 31.38 64.18 32.12 63.75C32.87 63.33 34.45 62.42 35.64 61.74C36.82 61.06 38.03 60.39 38.32 60.26C40.14 59.46 42.23 59.55 44.04 60.50C45.42 61.22 46.73 62.76 47.23 64.23C47.61 65.37 47.64 66.51 47.60 76.54C47.57 85.90 47.56 86.18 47.35 87.02C46.21 91.72 42.18 95.67 37.38 96.78C36.55 96.97 34.59 97.20 34.04 97.17C33.90 97.16 33.41 97.12 32.94 97.07ZM64.45 97.12C62.23 96.88 60.94 96.53 59.41 95.77C56.42 94.26 54.13 91.71 53.09 88.72C52.39 86.69 52.42 87.20 52.42 75.58C52.42 65.31 52.43 65.09 52.63 64.44C53.16 62.74 54.46 61.20 56.00 60.45C57.17 59.89 58.18 59.68 59.41 59.75C60.91 59.83 61.37 60.04 66.21 62.84C68.13 63.95 73.68 67.14 74.66 67.70C75.04 67.91 75.38 68.06 75.41 68.03C75.45 67.99 75.49 66.41 75.51 64.51L75.54 61.06L70.43 58.15C65.65 55.42 65.27 55.19 64.55 54.48C63.17 53.13 62.67 51.85 62.77 49.90C62.83 48.71 63.07 47.93 63.66 47.01C64.46 45.78 65.03 45.36 68.83 43.20C69.83 42.64 73.84 40.32 74.95 39.67L75.52 39.33L75.53 35.72L75.53 32.12L75.10 32.36C74.22 32.86 67.88 36.51 66.67 37.21C61.26 40.33 61.12 40.39 59.37 40.46C58.44 40.49 58.00 40.46 57.50 40.34C55.16 39.73 53.31 37.92 52.66 35.60C52.46 34.89 52.45 14.72 52.65 13.65C52.98 11.81 53.74 9.96 54.80 8.39C55.45 7.41 57.21 5.65 58.16 5.02C62.69 2.01 68.28 1.99 72.63 4.95C74.29 6.08 75.52 7.41 76.62 9.24C77.25 10.28 77.65 11.34 78.10 13.07C78.45 14.46 78.96 15.81 79.39 16.56C80.31 18.12 81.81 19.73 83.30 20.75C84.85 21.81 86.13 22.35 88.82 23.07C92.91 24.16 96.37 27.53 97.57 31.58C98.44 34.51 98.18 37.30 96.77 40.08C96.04 41.54 95.37 42.42 93.81 43.96C92.91 44.85 92.20 45.66 91.87 46.16C90.35 48.48 90.19 51.21 91.44 53.54C92.03 54.64 92.57 55.32 93.84 56.54C94.94 57.61 96.06 58.97 96.61 59.92C97.34 61.18 97.93 63.22 98.04 64.82C98.31 68.73 96.33 72.81 93.03 75.16C91.52 76.24 90.24 76.80 88.14 77.30C85.81 77.85 84.63 78.32 83.13 79.30C81.43 80.41 79.98 81.89 78.99 83.54C78.34 84.63 77.92 85.76 77.59 87.28C77.04 89.80 76.15 91.44 74.33 93.25C71.88 95.69 69.10 96.91 65.56 97.11C65.14 97.14 64.65 97.14 64.45 97.12Z";
+  let storm = null;
+  const stormImg = () => storm || (storm = new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = '/static/assets/storm.jpg'; }));
+  function rr(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
+  async function drawCard(t, cv) {
     const W = 1200, H = 630, x = cv.getContext('2d'); cv.width = W; cv.height = H;
-    const bg = x.createLinearGradient(0, 0, W, H); bg.addColorStop(0, '#0a1016'); bg.addColorStop(1, '#101c24'); x.fillStyle = bg; x.fillRect(0, 0, W, H);
-    const glow = x.createRadialGradient(W - 180, 120, 10, W - 180, 120, 420); glow.addColorStop(0, 'rgba(84,217,126,.28)'); glow.addColorStop(1, 'rgba(84,217,126,0)'); x.fillStyle = glow; x.fillRect(0, 0, W, H);
-    x.strokeStyle = 'rgba(255,255,255,.08)'; x.lineWidth = 2; x.strokeRect(24, 24, W - 48, H - 48);
-    x.fillStyle = '#54d97e'; x.font = '600 26px DM Sans, system-ui, sans-serif'; x.fillText('GLIA · AI MODEL COIN', 72, 104);
-    x.fillStyle = '#fff'; x.font = '700 92px DM Sans, system-ui, sans-serif'; x.fillText((t.name || '?').slice(0, 18), 72, 210);
-    x.fillStyle = '#9fb0bb'; x.font = '500 34px DM Sans, system-ui, sans-serif'; x.fillText('$' + (t.symbol || '') + '  ·  backs ' + shortModel(t.model || t.modelName), 72, 262);
+    try { await Promise.all(['600 88px Outfit', '500 30px Outfit', '500 24px Inter', '500 22px "JetBrains Mono"'].map(f => document.fonts.load(f))); } catch (e) {}
+    const img = await stormImg();
+    x.fillStyle = '#eef0f3'; x.fillRect(0, 0, W, H);
+    if (img) { x.save(); x.filter = 'blur(10px) saturate(.8)'; const sc = Math.max(W / img.width, H / img.height) * 1.08; x.drawImage(img, (W - img.width * sc) / 2, (H - img.height * sc) / 2, img.width * sc, img.height * sc); x.restore(); }
+    const veil = x.createLinearGradient(0, 0, 0, H); veil.addColorStop(0, 'rgba(255,255,255,.5)'); veil.addColorStop(1, 'rgba(255,255,255,.8)'); x.fillStyle = veil; x.fillRect(0, 0, W, H);
+    x.save(); x.shadowColor = 'rgba(10,10,10,.18)'; x.shadowBlur = 50; x.shadowOffsetY = 20; rr(x, 48, 48, W - 96, H - 96, 28); x.fillStyle = 'rgba(255,255,255,.74)'; x.fill(); x.restore();
+    rr(x, 48, 48, W - 96, H - 96, 28); x.strokeStyle = 'rgba(10,10,10,.07)'; x.lineWidth = 2; x.stroke();
+    x.save(); x.translate(92, 84); x.scale(.44, .44); x.fillStyle = '#0a0a0a'; x.fill(new Path2D(MARK_D), 'evenodd'); x.restore();
+    x.fillStyle = '#0a0a0a'; x.font = '600 32px Outfit, system-ui, sans-serif'; x.fillText('Glia', 146, 118);
+    x.textAlign = 'right'; x.fillStyle = '#6b7280'; x.font = '500 20px "JetBrains Mono", monospace'; x.fillText('AI MODEL COIN', W - 92, 114); x.textAlign = 'left';
+    const g1 = x.createLinearGradient(0, 170, 0, 250); g1.addColorStop(0, '#0a0a0a'); g1.addColorStop(1, '#3b4a6b');
+    x.fillStyle = g1; x.font = '600 88px Outfit, system-ui, sans-serif'; x.fillText((t.name || '?').slice(0, 18), 92, 244);
+    x.fillStyle = '#4b5058'; x.font = '500 30px Outfit, system-ui, sans-serif'; x.fillText('$' + (t.symbol || '') + '  \u00b7  backs ' + shortModel(t.model || t.modelName), 92, 292);
     const f = G().fmtUsd, g = gradOf(t);
-    const cells = [['Market cap', f(usdOf(t))], ['24h volume', f(t.volume24hUsd || 0)], ['Curve filled', Math.round(g * 100) + '%']];
-    cells.forEach(([k, v], i) => { const cx = 72 + i * 360; x.fillStyle = '#7f909b'; x.font = '500 26px DM Sans, system-ui, sans-serif'; x.fillText(k, cx, 380); x.fillStyle = '#fff'; x.font = '700 58px DM Sans, system-ui, sans-serif'; x.fillText(v, cx, 446); });
-    x.fillStyle = 'rgba(255,255,255,.08)'; x.fillRect(72, 492, W - 144, 12); x.fillStyle = '#54d97e'; x.fillRect(72, 492, Math.max(12, (W - 144) * g), 12);
-    x.fillStyle = '#9fb0bb'; x.font = '500 26px DM Sans, system-ui, sans-serif'; x.fillText('Every trade funds AI compute on Robinhood Chain', 72, 566);
-    x.textAlign = 'right'; x.fillStyle = '#fff'; x.font = '600 26px DM Sans, system-ui, sans-serif'; x.fillText('@useglia', W - 72, 566); x.textAlign = 'left';
+    [['Market cap', f(usdOf(t))], ['24h volume', f(t.volume24hUsd || 0)], ['Curve filled', Math.round(g * 100) + '%']].forEach(([k, v], i) => {
+      const cx = 92 + i * 342; rr(x, cx, 336, 318, 118, 18); x.fillStyle = 'rgba(247,248,250,.92)'; x.fill(); x.strokeStyle = 'rgba(10,10,10,.06)'; x.lineWidth = 1.5; x.stroke();
+      x.fillStyle = '#6b7280'; x.font = '500 22px Inter, system-ui, sans-serif'; x.fillText(k, cx + 24, 374);
+      x.fillStyle = '#0a0a0a'; x.font = '600 46px Outfit, system-ui, sans-serif'; x.fillText(v, cx + 24, 428);
+    });
+    rr(x, 92, 482, W - 184, 12, 6); x.fillStyle = 'rgba(10,10,10,.08)'; x.fill();
+    rr(x, 92, 482, Math.max(12, (W - 184) * g), 12, 6); x.fillStyle = '#00b543'; x.fill();
+    x.fillStyle = '#4b5058'; x.font = '500 22px Inter, system-ui, sans-serif'; x.fillText('Every trade funds AI compute on Robinhood Chain', 92, 540);
+    x.textAlign = 'right'; x.fillStyle = '#0a0a0a'; x.font = '600 24px Outfit, system-ui, sans-serif'; x.fillText('useglia.xyz', W - 92, 540); x.textAlign = 'left';
   }
   function tokenPage() {
     const m = location.pathname.match(/\/token\/(0x[0-9a-fA-F]{40})/); if (!m) return;
@@ -130,7 +145,7 @@
           const md = document.createElement('div'); md.className = 'gl-modal';
           md.innerHTML = '<div class="box"><canvas></canvas><div class="acts"><button class="gl-share-btn" data-a="copy">Copy link</button><button class="gl-share-btn" data-a="dl">Download image</button><button class="gl-share-btn" data-a="x">Post on X</button><button class="gl-share-btn" data-a="close">Close</button></div></div>';
           document.body.appendChild(md);
-          const cv = md.querySelector('canvas'); drawCard(t, cv);
+          const cv = md.querySelector('canvas'); drawCard(t, cv).then(() => md.dataset.ready = '1');
           const url = location.origin + G().href('/token/' + t.token);
           md.addEventListener('click', e => {
             const a = e.target.dataset && e.target.dataset.a;

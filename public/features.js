@@ -163,3 +163,42 @@
 
   ready(() => wait(() => window.GLIA && window.GLIA.api, () => stats().catch(() => {}).finally(() => { tape(); home(); tokenPage(); })));
 })();
+
+// Price Alerts: site-wide checker (runs on every page), bell button on coin pages
+(() => {
+  const KEY = 'glia.alerts';
+  const list = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { return []; } };
+  const save = a => { localStorage.setItem(KEY, JSON.stringify(a)); window.dispatchEvent(new Event('glia-alerts')); };
+  const A = window.GLIA_ALERTS = { list, add: o => { const a = list(); a.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), createdAt: Date.now(), ...o }); save(a); },
+    remove: id => save(list().filter(x => x.id !== id)) };
+  const fmt = (m, v) => m === 'price' ? (v >= 1 ? '$' + v.toFixed(2) : '$' + Number(v).toPrecision(3)) : '$' + (v >= 1e6 ? (v / 1e6).toFixed(2) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(1) + 'K' : Math.round(v));
+  function banner(msg, tok) {
+    let w = document.getElementById('gl-alerts'); if (!w) { w = document.createElement('div'); w.id = 'gl-alerts'; w.style.cssText = 'position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;flex-direction:column;gap:8px;max-width:340px'; document.body.appendChild(w); }
+    const d = document.createElement('a'); d.href = (window.GLIA ? GLIA.href('/token/' + tok) : '/token/' + tok);
+    d.style.cssText = 'display:block;background:#fff;border:1px solid rgba(11,26,51,.1);border-left:4px solid #22c55e;border-radius:14px;padding:12px 14px;box-shadow:0 12px 32px rgba(11,26,51,.14);color:#0a0a0a;text-decoration:none;font:500 14px Outfit,system-ui';
+    d.innerHTML = '<div style="font-size:11px;opacity:.55;margin-bottom:2px">🔔 Price alert</div>' + msg.replace(/</g, '&lt;'); w.appendChild(d); setTimeout(() => d.remove(), 15000);
+  }
+  async function check() {
+    const open = list().filter(a => !a.hitAt); if (!open.length) return;
+    try {
+      const r = await fetch((window.GLIA ? GLIA.href('/api/tokens?sort=mcap&limit=200') : '/api/tokens?sort=mcap&limit=200')); const toks = (await r.json()).tokens || [];
+      const all = list(); let hit = false;
+      all.forEach(a => { if (a.hitAt) return; const t = toks.find(x => x.token.toLowerCase() === a.token.toLowerCase()); if (!t) return;
+        const cur = a.metric === 'price' ? t.priceUsd : t.marketCapUsd; if (!cur) return;
+        if (a.dir === 'above' ? cur >= a.value : cur <= a.value) { a.hitAt = Date.now(); a.hitValue = cur; hit = true;
+          const msg = `$${t.symbol} ${a.metric === 'price' ? 'price' : 'market cap'} is ${a.dir} ${fmt(a.metric, a.value)} (now ${fmt(a.metric, cur)})`;
+          banner(msg, t.token);
+          try { if (window.Notification && Notification.permission === 'granted') { const n = new Notification('Glia price alert', { body: msg, icon: '/static/official-logo.png', tag: a.id }); n.onclick = () => { window.focus(); location.href = '/token/' + t.token; }; } } catch (e) {}
+        } });
+      if (hit) save(all);
+    } catch (e) {}
+  }
+  const start = () => { check(); setInterval(check, 20000); };
+  document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', start) : start();
+  // bell on coin pages
+  const tok = (location.pathname.split('/token/')[1] || '').split(/[/?#]/)[0];
+  if (tok) { let n = 0; const iv = setInterval(() => { const h = document.querySelector('main h1'); if (!h && ++n < 40) return; clearInterval(iv); if (!h || document.getElementById('al-bell')) return;
+    const b = document.createElement('a'); b.id = 'al-bell'; b.href = (window.GLIA ? GLIA.href('/alerts?token=' + tok) : '/alerts?token=' + tok); b.title = 'Set a price alert';
+    b.style.cssText = 'display:inline-block;border:1px solid rgba(11,26,51,.12);background:#fff;border-radius:999px;padding:.3rem .75rem;margin-left:.5rem;font:500 .85rem Outfit,system-ui;color:#0a0a0a;text-decoration:none;vertical-align:middle';
+    const c = list().filter(a => a.token.toLowerCase() === tok.toLowerCase() && !a.hitAt).length; b.textContent = c ? `🔔 ${c} alert${c > 1 ? 's' : ''}` : '🔔 Alert'; h.appendChild(b); }, 300); }
+})();

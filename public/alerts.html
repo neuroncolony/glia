@@ -1,0 +1,68 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('glia.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{BRAND}} · Price Alerts</title><meta name="description" content="{{DESCRIPTION}}">
+<link rel="stylesheet" href="static/styles.css"><script src="static/shell.js" defer></script><script src="static/features.js" defer></script>
+<style>
+.al-form{display:grid;grid-template-columns:1.4fr 1fr 1fr 1.2fr auto;gap:.6rem;align-items:end;padding:1.1rem;margin:1rem 0}
+.al-form label{font-size:.75rem;opacity:.6;display:block;margin-bottom:.3rem}.al-form select,.al-form input{width:100%;height:44px;border-radius:12px;padding:0 .8rem;border:1px solid rgba(11,26,51,.12);background:#fff;font:inherit}
+@media(max-width:900px){.al-form{grid-template-columns:1fr 1fr}}
+.al-row{display:grid;grid-template-columns:40px 1.5fr 1.6fr 1fr 110px;gap:.8rem;align-items:center;padding:.85rem 1.1rem;margin-bottom:.55rem}
+.al-row img{width:38px;height:38px;border-radius:50%;object-fit:cover;background:rgba(11,26,51,.06)}.al-row b{font-family:Outfit,system-ui}
+.al-bar{height:6px;border-radius:9px;background:rgba(11,26,51,.08);overflow:hidden;margin-top:.35rem}.al-bar i{display:block;height:100%;background:#22c55e;border-radius:9px}
+.pill-a{display:inline-block;border-radius:999px;padding:.18rem .6rem;font-size:.74rem;font-weight:600;background:#e0f2fe;color:#0369a1}.pill-a.hit{background:#dcfce7;color:#15803d}
+@media(max-width:800px){.al-row{grid-template-columns:36px 1fr 90px}.al-row .hide-m{display:none}}
+</style></head>
+<body><header class="nav" id="nav"></header>
+<main class="page"><div class="wrap"><section class="section">
+<div class="section-head"><div><div class="eyebrow">Price Alerts</div><h2>Get pinged the moment a coin moves</h2></div><span class="chip" id="al-live">Live</span></div>
+<p class="hint" style="margin:0">Pick a coin, a target price or market cap, and Glia alerts you on any page of the site with a desktop notification. Alerts stay in this browser, no account needed.</p>
+<div class="card al-form">
+  <div><label>Coin</label><select id="f-coin"></select></div>
+  <div><label>Watch</label><select id="f-metric"><option value="mcap">Market cap</option><option value="price">Price</option></select></div>
+  <div><label>When it goes</label><select id="f-dir"><option value="above">Above</option><option value="below">Below</option></select></div>
+  <div><label>Target (USD)</label><input id="f-val" type="number" min="0" step="any" placeholder="e.g. 25000"></div>
+  <button class="btn" id="f-add" style="height:44px">Create alert</button>
+</div>
+<div class="hint" id="f-now" style="margin:-.4rem 0 1rem .2rem"></div>
+<div id="al-list"><div class="card empty">Loading…</div></div>
+<div class="hint" id="al-perm" style="margin-top:.8rem"></div>
+</section></div></main>
+<footer class="footer" id="footer"></footer>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const { api, esc, fmtUsd, href, short } = GLIA; const $ = s => document.querySelector(s); const A = window.GLIA_ALERTS;
+  const fmtP = v => !v ? '$0' : v >= 1 ? '$' + v.toFixed(2) : '$' + v.toPrecision(3);
+  const fmtV = (m, v) => m === 'price' ? fmtP(v) : fmtUsd(v);
+  let coins = [], lastAt = 0; const pre = new URLSearchParams(location.search).get('token');
+  function now() { const c = coins.find(x => x.token === $('#f-coin').value); if (!c) return;
+    $('#f-now').textContent = `Now: price ${fmtP(c.priceUsd)} · market cap ${fmtUsd(c.marketCapUsd || 0)}`;
+    if (!$('#f-val').value) $('#f-val').placeholder = 'e.g. ' + ($('#f-metric').value === 'price' ? (c.priceUsd * 2).toPrecision(3) : Math.round((c.marketCapUsd || 0) * 2)); }
+  function perm() { const p = window.Notification ? Notification.permission : 'unsupported';
+    $('#al-perm').innerHTML = p === 'granted' ? 'Desktop notifications are on.' : p === 'unsupported' ? 'This browser has no desktop notifications, alerts will show as a banner on the site.' :
+      `Desktop notifications are off. <a href="#" id="al-en">Turn them on</a> to get pinged even when this tab is in the background.`;
+    const e = $('#al-en'); if (e) e.onclick = ev => { ev.preventDefault(); Notification.requestPermission().then(perm); }; }
+  function render() {
+    const list = A.list(); if (!list.length) { $('#al-list').innerHTML = '<div class="card empty">No alerts yet. Create one above.</div>'; return; }
+    $('#al-list').innerHTML = list.map(a => { const c = coins.find(x => x.token.toLowerCase() === a.token.toLowerCase()) || {};
+      const cur = a.metric === 'price' ? c.priceUsd : c.marketCapUsd; const prog = cur ? Math.max(0, Math.min(100, a.dir === 'above' ? cur / a.value * 100 : a.value / cur * 100)) : 0;
+      return `<div class="card al-row"><img src="${esc(href('/api/token/' + a.token + '/logo'))}" alt="" onerror="this.style.visibility='hidden'">
+      <div><b>$${esc(c.symbol || a.symbol || short(a.token))}</b><div class="hint">${a.metric === 'price' ? 'Price' : 'Market cap'} ${a.dir} ${fmtV(a.metric, a.value)}</div></div>
+      <div class="hide-m"><div class="hint">Now ${cur ? fmtV(a.metric, cur) : '...'} · ${Math.round(prog)}% of the way</div><div class="al-bar"><i style="width:${prog}%"></i></div></div>
+      <div><span class="pill-a ${a.hitAt ? 'hit' : ''}">${a.hitAt ? 'Triggered' : 'Watching'}</span></div>
+      <div style="text-align:right"><a class="btn sm ghost" href="${href('/token/' + a.token)}">Open</a> <button class="btn sm ghost" data-del="${a.id}" title="Delete">✕</button></div></div>`; }).join('');
+  }
+  async function load() { try { coins = (await api('tokens?sort=mcap&limit=200')).tokens || []; const sel = $('#f-coin'), v = sel.value || pre;
+      sel.innerHTML = coins.map(c => `<option value="${c.token}">$${esc(c.symbol || short(c.token))} · ${esc(c.name || '')}</option>`).join('');
+      if (v && coins.some(c => c.token.toLowerCase() === v.toLowerCase())) sel.value = coins.find(c => c.token.toLowerCase() === v.toLowerCase()).token;
+      now(); render(); lastAt = Date.now(); } catch (e) { $('#al-list').innerHTML = `<div class="card empty">${esc(e.message || 'Could not load coins.')}</div>`; } }
+  $('#f-coin').onchange = $('#f-metric').onchange = () => { $('#f-val').value = ''; now(); };
+  $('#f-add').onclick = () => { const v = parseFloat($('#f-val').value), c = coins.find(x => x.token === $('#f-coin').value);
+    if (!c || !(v > 0)) { GLIA.toast && GLIA.toast('Enter a target above zero.'); return; }
+    A.add({ token: c.token, symbol: c.symbol, metric: $('#f-metric').value, dir: $('#f-dir').value, value: v });
+    $('#f-val').value = ''; render(); GLIA.toast && GLIA.toast('Alert created for $' + (c.symbol || ''));
+    if (window.Notification && Notification.permission === 'default') Notification.requestPermission().then(perm); };
+  document.addEventListener('click', e => { const b = e.target.closest('[data-del]'); if (b) { A.remove(b.dataset.del); render(); } });
+  window.addEventListener('glia-alerts', render);
+  perm(); load(); setInterval(() => { if (!document.hidden) load(); }, 20000);
+  setInterval(() => { if (lastAt) $('#al-live').textContent = 'Live · ' + Math.round((Date.now() - lastAt) / 1000) + 's ago'; }, 1000);
+});
+</script></body></html>

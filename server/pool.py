@@ -2,7 +2,7 @@
 Money facts stated plainly: the 2% creator tax accrues in the pons escrow in ETH. A keeper claims it to the treasury wallet.
 This server reads the treasury balance and books spend per message at OpenRouter list price. It never holds keys or moves ETH."""
 import os, sys, time, threading, secrets, hashlib, re
-import requests
+import json as _json, urllib.request as _ur
 import chain, store, models as M, holders, personas, agora, hidden, official
 try:
     from core.http_client import proxied_get, proxied_post
@@ -29,8 +29,10 @@ def eth_usd():
     got = None
     for url, pick, prox in srcs:
         try:
-            r = proxied_get(url, headers=CALLER, timeout=5) if prox else requests.get(url, timeout=5)
-            v = float(pick(r.json()))
+            r = None
+            if prox: j = proxied_get(url, headers=CALLER, timeout=5).json()
+            else: j = _json.loads(_ur.urlopen(_ur.Request(url, headers={'User-Agent': 'glia'}), timeout=5).read())
+            v = float(pick(j))
             if v > 0: got = v; break
         except Exception: continue
     if got:

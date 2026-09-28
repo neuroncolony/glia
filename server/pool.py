@@ -2,6 +2,7 @@
 Money facts stated plainly: the 2% creator tax accrues in the pons escrow in ETH. A keeper claims it to the treasury wallet.
 This server reads the treasury balance and books spend per message at OpenRouter list price. It never holds keys or moves ETH."""
 import os, sys, time, threading, secrets, hashlib, re
+import requests
 import chain, store, models as M, holders, personas, agora, hidden, official
 try:
     from core.http_client import proxied_get, proxied_post
@@ -20,10 +21,25 @@ def eth_usd():
     # Success is cached 120s. A failed fetch is also remembered for 30s so a rate-limited CoinGecko
     # does not cost one 10s timeout per token row.
     if time.time() - _eth['at'] < (120 if _eth['usd'] else 30): return _eth['usd']
-    try:
-        r = proxied_get('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd', headers=CALLER, timeout=6)
-        _eth['usd'] = float(r.json()['ethereum']['usd'])
-    except Exception: pass
+    srcs = [
+        ('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd', lambda j: j['ethereum']['usd'], True),
+        ('https://api.coinbase.com/v2/prices/ETH-USD/spot', lambda j: j['data']['amount'], False),
+        ('https://api.kraken.com/0/public/Ticker?pair=ETHUSD', lambda j: list(j['result'].values())[0]['c'][0], False),
+    ]
+    got = None
+    for url, pick, prox in srcs:
+        try:
+            r = proxied_get(url, headers=CALLER, timeout=5) if prox else requests.get(url, timeout=5)
+            v = float(pick(r.json()))
+            if v > 0: got = v; break
+        except Exception: continue
+    if got:
+        _eth['usd'] = got
+        try: store.update('eth_usd', {}, lambda d: d.update(usd=got, at=time.time()))
+        except Exception: pass
+    elif not _eth['usd']:
+        try: _eth['usd'] = (store.load('eth_usd', {}) or {}).get('usd')
+        except Exception: pass
     _eth['at'] = time.time()
     return _eth['usd']
 

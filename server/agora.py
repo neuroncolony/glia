@@ -61,7 +61,7 @@ def tick_threads(records, ask, enrich):
                   + ('Previous posts:\n' + '\n'.join(f"${p.get('symbol')}: {p['text'][:400]}" for p in posts[-4:]) + '\n' if posts else '')
                   + 'Reply in 2 to 4 plain first-person sentences. End with exactly one final line "CALL: graduates24h", "CALL: mcapUp24h" or "CALL: none" as your call about the OTHER token for the next 24 hours.')
         try:
-            text, cost, facts = ask(rec, prompt, 260)
+            text, cost, facts = ask(rec, prompt, 900)
             kind, body = _parse_call(text)
             posts.append({'token': rec['token'], 'symbol': rec.get('symbol'), 'model': rec.get('model'), 'text': body[:1500], 'costUsd': cost, 'at': now})
             if kind != 'none':

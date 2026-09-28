@@ -57,7 +57,7 @@ LEDGER = store.load('ledger', {'spentUsd': 0.0, 'messages': 0, 'byModel': {}, 'b
 def _record(snap, model=None, logo='', description='', tx=None, block=None):
     return {'token': snap['token'], 'curve': snap['curve'], 'deployer': snap['deployer'], 'name': snap.get('name'), 'symbol': snap.get('symbol'),
             'model': model, 'logo': logo if str(logo).startswith('https://') else '', 'description': str(description)[:500], 'tx': tx,
-            'launchedAt': store.now(), 'block': block, 'phase': snap['phase'], 'priceEth': snap['priceEth'], 'marketCapEth': snap['marketCapEth'],
+            'launchedAt': _launch_ts(block), 'block': block, 'phase': snap['phase'], 'priceEth': snap['priceEth'], 'marketCapEth': snap['marketCapEth'],
             'curveState': snap['curve_state'], 'updatedAt': store.now()}
 
 def register_launch(txhash, model, logo, description, socials=None, caller=None):
@@ -268,6 +268,9 @@ def _trade_stats():
             if r.get('at', 0) > cut:
                 v, n = out.get(tk, (0.0, 0)); out[tk] = (v + int(r.get('ethWei', 0)) / 1e18, n + 1)
     return out
+def _launch_ts(block):
+    try: return chain.block_timestamp(block) if block else store.now()
+    except Exception: return store.now()
 def enrich(rec, px=None, ts=None):
     px = eth_usd() if px is None else px; px = px or 0
     if ts is None: ts = _trade_stats()
@@ -278,6 +281,7 @@ def enrich(rec, px=None, ts=None):
         thr = min(1.0, raised / target) if target else None
     except Exception: pass
     graduated = cs.get('graduated') is True or rec.get('phase') == 2
+    if graduated: thr = 1.0
     last_rows = TRADES.get(rec['token'].lower(), [])
     last_at = last_rows[-1]['at'] if last_rows else None
     logo_url = '/api/token/' + rec['token'] + '/logo'
@@ -314,6 +318,9 @@ def _ours():
     return out
 def token_list(sort='new', model=None, status=None, limit=50):
     px = eth_usd(); ts = _trade_stats()
+    for r in _ours():
+        if r.get('block') and not r.get('_tsFixed'):
+            r['launchedAt'] = _launch_ts(r['block']); r['_tsFixed'] = True
     rows = [enrich(r, px, ts) for r in _ours()]
     if model: rows = [r for r in rows if r.get('model') == model]
     if status: rows = [r for r in rows if r['status'].lower() == status.lower()]
@@ -451,9 +458,19 @@ def _split():
     reserve = max(0.0, inflow * POOL_SHARE - release_eth())
     owner = inflow - reserve
     return inflow, reserve, owner
+_STATS_LAST = {}
 def stats():
-    px = eth_usd(); tb = chain.treasury_balance()
-    inflow, reserve, owner = _split()
+    """Never fails the page: each upstream read falls back to the last good value when the RPC rate limits."""
+    try: out = _stats_live(); _STATS_LAST.update(out); return out
+    except Exception as e:
+        print('stats fallback', repr(e), flush=True)
+        if _STATS_LAST: return dict(_STATS_LAST)
+        px = eth_usd() or None; spent = spent_usd()
+        return {'treasury': chain.treasury(), 'treasuryEth': None, 'ethUsd': px, 'availableUsd': None, 'spentUsd': spent, 'raisedUsd': spent,
+                'launches': len(_ours()), 'messages': messages_count(), 'chatEnabled': chat_enabled()}
+def _stats_live():
+    px = eth_usd(); tb = chain.cached('treasury_bal', chain.treasury_balance, ttl=30)
+    inflow, reserve, owner = chain.cached('fee_split', _split, ttl=60)
     avail = (reserve * px) if px else None
     spent = spent_usd()
     return {'treasury': tb['treasury'], 'treasuryEth': chain.eth(int(tb['balanceWei'])) if tb['balanceWei'] else None, 'ethUsd': px, 'availableUsd': avail,

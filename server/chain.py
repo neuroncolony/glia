@@ -178,6 +178,35 @@ def curve_state(curve):
     if out['ethReserve'] and out['tokenReserve']: out['priceEth'] = out['ethReserve'] / out['tokenReserve']
     return out
 
+# ---------------------------------------------------------------- DEX price for graduated coins
+POOL_MANAGER = (os.environ.get('GLIA_POOL_MANAGER', '').strip() or '0x8366a39cc670b4001a1121b8f6a443a643e40951').lower()
+V4_INIT_TOPIC = '0x' + keccak(text='Initialize(bytes32,address,address,uint24,int24,address,uint160,int24)').hex()
+_POOL_IDS = {}
+
+def dex_pool_id(token):
+    """Pool id of the native ETH / token pool created at graduation (one topic filtered getLogs, cached)."""
+    t = addr(token).lower()
+    if t in _POOL_IDS: return _POOL_IDS[t]
+    lg = launch_log_of(t); fb = hex(lg['block']) if lg else '0x0'
+    logs = rpc('eth_getLogs', [{'address': POOL_MANAGER, 'fromBlock': fb, 'toBlock': 'latest',
+                                'topics': [V4_INIT_TOPIC, None, '0x' + '0' * 64, '0x' + '0' * 24 + t[2:]]}])
+    pid = logs[0]['topics'][1] if logs else None
+    if pid: _POOL_IDS[t] = pid
+    return pid
+
+def dex_price_eth(token):
+    """Live spot price in ETH per whole token, read from the pool slot0 via extsload. None if no pool."""
+    def fetch():
+        pid = dex_pool_id(token)
+        if not pid: return None
+        slot = keccak(bytes.fromhex(pid[2:]) + (6).to_bytes(32, 'big'))
+        raw = rpc('eth_call', [{'to': POOL_MANAGER, 'data': '0x1e2eaeaf' + slot.hex()}, 'latest'])
+        sp = int(raw[2:66], 16) & ((1 << 160) - 1)
+        if not sp: return None
+        per_eth = (sp / 2 ** 96) ** 2  # token units per ETH (currency0 is native ETH, both 18 decimals)
+        return 1 / per_eth if per_eth else None
+    return cached('dexpx:' + token.lower(), fetch, ttl=30)
+
 def erc20(token):
     t = addr(token); out = {}
     for key, sig, ret in (('name','name()',['string']),('symbol','symbol()',['string']),('totalSupply','totalSupply()',['uint256']),('decimals','decimals()',['uint8'])):
@@ -192,6 +221,9 @@ def token_snapshot(token):
     meta = erc20(token); curve = curve_state(info['curve'])
     supply = int(meta['totalSupply']) if meta.get('totalSupply') else 0
     price = curve.get('priceEth')
+    if curve.get('graduated') or info.get('phase') == 2:
+        try: price = dex_price_eth(token) or price
+        except Exception: pass
     mcap = (price * supply / 10**18) if (price and supply) else None
     ours = bool(treasury()) and info['creatorFeeRecipient'].lower() == treasury().lower()
     return {**info, **meta, 'curve_state':{k:(str(v) if isinstance(v,int) else v) for k,v in curve.items()},

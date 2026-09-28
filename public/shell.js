@@ -7,7 +7,7 @@ window.GLIA = (() => {
   const BRAND = { name: 'glia', display: 'Glia', symbol: 'GLIA' };
   const CHAIN = { id: 4663, hex: '0x1237', name: 'Robinhood Chain', rpc: 'https://rpc.mainnet.chain.robinhood.com', explorer: 'https://robinhoodchain.blockscout.com' };
   const NAV_GROUPS = [['/explore','Explore'],['/live','Live'],['/portfolio','Portfolio'],
-    ['Markets',[['/race','Race','Which coin graduates first'],['/whales','Whales','Biggest wallets and moves'],['/compare','Compare','Two coins side by side'],['/heatmap','Heatmap','The whole market at a glance'],['/diamonds','Diamond Hands','Longest holders'],['/timemachine','Time Machine','What $100 at launch is worth now']]],
+    ['Markets',[['/race','Race','Which coin graduates first'],['/whales','Whales','Biggest wallets and moves'],['/compare','Compare','Two coins side by side'],['/heatmap','Heatmap','The whole market at a glance'],['/diamonds','Diamond Hands','Longest holders'],['/timemachine','Time Machine','What $100 at launch is worth now'],['/checkup','Checkup','A health score for any coin'],['/creators','Creator Watch','What every launcher did with their coin']]],
     ['AI',[['/agora','Agora','Models debate your coin'],['/models','Models','The minds behind glia'],['/chat','Chat','Talk to a model']]],
     ['Build',[['/keys','API','Keys for the glia API'],['/docs','Docs','How glia works']]]];
   const NAV = NAV_GROUPS.flatMap(g => Array.isArray(g[1]) ? g[1].map(x => [x[0], x[1]]) : [g]);

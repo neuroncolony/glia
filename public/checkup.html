@@ -1,0 +1,52 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('glia.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{BRAND}} · Checkup</title><meta name="description" content="{{DESCRIPTION}}">
+<link rel="stylesheet" href="static/styles.css"><script src="static/shell.js" defer></script><script src="static/features.js" defer></script>
+<style>
+.ck-top{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin:1rem 0 1.25rem}.ck-top .card{padding:1rem 1.1rem}.ck-top b{display:block;font-size:1.5rem;margin-top:.3rem;font-family:Outfit,system-ui}
+.pill-g{display:inline-block;border-radius:999px;padding:.18rem .6rem;font-size:.74rem;font-weight:600}.g-strong{background:#dcfce7;color:#15803d}.g-ok{background:#e0f2fe;color:#0369a1}.g-watch{background:#fef3c7;color:#b45309}
+@media(max-width:900px){.ck-top{grid-template-columns:repeat(2,1fr)}}
+.ck-bar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:1rem 0}.ck-bar select{min-width:260px;height:44px;border-radius:12px;padding:0 .9rem;border:1px solid rgba(11,26,51,.12);background:#fff;font:inherit}
+.ck-grid{display:grid;grid-template-columns:320px 1fr;gap:1rem;align-items:start}
+.ck-score{padding:1.4rem;text-align:center;position:sticky;top:90px}.ck-score img{width:64px;height:64px;border-radius:50%;object-fit:cover;background:rgba(11,26,51,.06)}
+.ck-ring{--p:0;width:170px;height:170px;border-radius:50%;margin:1rem auto;display:grid;place-items:center;background:conic-gradient(#22c55e calc(var(--p)*1%),rgba(11,26,51,.07) 0)}
+.ck-ring div{width:138px;height:138px;border-radius:50%;background:#fff;display:grid;place-items:center;font-family:Outfit,system-ui;font-size:2.6rem;font-weight:600;line-height:1}.ck-ring small{display:block;font-size:.8rem;font-weight:400;opacity:.6}
+.ck-row{display:grid;grid-template-columns:28px 1fr auto;gap:.9rem;align-items:center;padding:1rem 1.2rem;margin-bottom:.6rem}
+.ck-row .ic{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:.9rem;font-weight:700}.ic.g-strong,.ic.g-ok,.ic.g-watch{padding:0}
+.ck-row b{font-family:Outfit,system-ui;font-size:1.08rem}.ck-row .v{font-size:.95rem;text-align:right}.ck-row .hint{font-size:.82rem}
+@media(max-width:900px){.ck-grid{grid-template-columns:1fr}.ck-score{position:static}.ck-row{grid-template-columns:28px 1fr}.ck-row .v{grid-column:2;text-align:left}}
+</style></head>
+<body><header class="nav" id="nav"></header>
+<main class="page"><div class="wrap"><section class="section">
+<div class="section-head"><div><div class="eyebrow">Checkup</div><h2>A health report for any Glia coin</h2></div></div>
+<p class="hint" style="margin:0">Seven checks read straight from the chain: holders, concentration, what the creator holds and traded, buy pressure, traders and graduation. Pick a coin and get its score in a second.</p>
+<div class="ck-bar"><select id="ck-pick" aria-label="Choose a coin"><option>Loading coins…</option></select><button class="btn sm ghost" id="ck-share" type="button">Copy link</button><a class="btn sm accent" id="ck-trade" href="#">Trade this coin</a></div>
+<div class="ck-grid"><div class="card ck-score" id="ck-score"><div class="empty">Reading the chain…</div></div><div id="ck-list"></div></div>
+</section></div></main>
+<footer class="footer" id="footer"></footer>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const { api, esc, fmtUsd, href, short } = GLIA; const $ = s => document.querySelector(s);
+  const icon = { strong: '✓', ok: '•', watch: '!' }, word = { strong: 'Strong', ok: 'Good', watch: 'Early' };
+  let cur = new URLSearchParams(location.search).get('token') || '';
+  async function coins() {
+    const d = await api('tokens?sort=mcap&limit=100'); const t = d.tokens || [];
+    if (!t.length) { $('#ck-score').innerHTML = `<div class="empty">No coins yet. <a href="${href('/launch')}">Launch one →</a></div>`; return; }
+    if (!cur || !t.some(x => x.token.toLowerCase() === cur.toLowerCase())) cur = t[0].token;
+    $('#ck-pick').innerHTML = t.map(x => `<option value="${x.token}" ${x.token.toLowerCase() === cur.toLowerCase() ? 'selected' : ''}>$${esc(x.symbol || short(x.token))} · ${esc(x.name || '')}</option>`).join('');
+    load();
+  }
+  async function load() {
+    try {
+      const d = await api('checkup?token=' + cur);
+      history.replaceState(null, '', href('/checkup?token=' + d.token)); $('#ck-trade').href = href('/token/' + d.token);
+      $('#ck-score').innerHTML = `<img src="${esc(href('/api/token/' + d.token + '/logo'))}" alt="" onerror="this.style.visibility='hidden'"><h3 style="margin:.6rem 0 0;font-family:Outfit,system-ui">$${esc(d.symbol || short(d.token))}</h3><div class="hint">${esc(d.name || '')}${d.marketCapUsd ? ' · ' + fmtUsd(d.marketCapUsd) + ' mcap' : ''}</div>
+        <div class="ck-ring" style="--p:${d.score}"><div>${d.score}<small>out of 100</small></div></div><span class="pill-g g-${d.score >= 70 ? 'strong' : d.score >= 45 ? 'ok' : 'watch'}">${esc(d.verdict)}</span>
+        <div class="hint" style="margin-top:.9rem">${d.checks.filter(c => c.grade === 'strong').length} strong · ${d.checks.filter(c => c.grade === 'ok').length} good · ${d.checks.filter(c => c.grade === 'watch').length} early</div>`;
+      $('#ck-list').innerHTML = d.checks.map(c => `<div class="card ck-row"><span class="ic pill-g g-${c.grade}">${icon[c.grade]}</span><div><b>${esc(c.label)}</b><div class="hint">${esc(c.note)}</div></div><div class="v">${esc(c.value)}<br><span class="pill-g g-${c.grade}" style="margin-top:.3rem">${word[c.grade]}</span></div></div>`).join('');
+    } catch (e) { $('#ck-score').innerHTML = `<div class="empty">${esc(e.message || 'Could not run the checkup.')}</div>`; }
+  }
+  $('#ck-pick').addEventListener('change', e => { cur = e.target.value; load(); });
+  $('#ck-share').addEventListener('click', async () => { try { await navigator.clipboard.writeText(location.href); $('#ck-share').textContent = 'Copied'; setTimeout(() => $('#ck-share').textContent = 'Copy link', 1400); } catch (e) {} });
+  coins().catch(e => { $('#ck-score').innerHTML = `<div class="empty">${esc(e.message)}</div>`; }); setInterval(() => { if (!document.hidden) load(); }, 20000);
+});
+</script></body></html>

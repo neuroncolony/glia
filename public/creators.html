@@ -1,0 +1,47 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><script>try{if(localStorage.getItem('glia.theme')==='dev')document.documentElement.setAttribute('data-theme','dev')}catch(e){}</script><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{BRAND}} · Creator Watch</title><meta name="description" content="{{DESCRIPTION}}">
+<link rel="stylesheet" href="static/styles.css"><script src="static/shell.js" defer></script><script src="static/features.js" defer></script>
+<style>
+.ck-top{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin:1rem 0 1.25rem}.ck-top .card{padding:1rem 1.1rem}.ck-top b{display:block;font-size:1.5rem;margin-top:.3rem;font-family:Outfit,system-ui}
+.pill-g{display:inline-block;border-radius:999px;padding:.18rem .6rem;font-size:.74rem;font-weight:600}.g-strong{background:#dcfce7;color:#15803d}.g-ok{background:#e0f2fe;color:#0369a1}.g-watch{background:#fef3c7;color:#b45309}
+@media(max-width:900px){.ck-top{grid-template-columns:repeat(2,1fr)}}
+.cr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:1rem}
+.cr{padding:1.1rem 1.2rem}.cr .hd{display:flex;justify-content:space-between;align-items:center;gap:.6rem}.cr .hd a{font-family:ui-monospace,monospace;color:inherit;font-weight:600}
+.cr .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin:.9rem 0}.cr .stats div{background:rgba(11,26,51,.04);border-radius:10px;padding:.55rem .7rem}.cr .stats b{display:block;font-family:Outfit,system-ui;font-size:1.1rem}.cr .stats span{font-size:.74rem;opacity:.6}
+.cr-coin{display:grid;grid-template-columns:34px 1fr auto;gap:.6rem;align-items:center;padding:.55rem 0;border-top:1px solid rgba(11,26,51,.07);text-decoration:none;color:inherit}.cr-coin img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:rgba(11,26,51,.06)}
+.cr-coin b{font-family:Outfit,system-ui}.cr-coin .r{text-align:right;font-size:.8rem}
+.cr-tabs{display:flex;gap:.4rem;margin:.2rem 0 1rem;flex-wrap:wrap}.cr-tabs button{border:1px solid rgba(11,26,51,.12);background:#fff;border-radius:999px;padding:.4rem .9rem;cursor:pointer;font:inherit;font-size:.88rem}.cr-tabs button.on{background:#0b1a33;color:#fff;border-color:#0b1a33}
+</style></head>
+<body><header class="nav" id="nav"></header>
+<main class="page"><div class="wrap"><section class="section">
+<div class="section-head"><div><div class="eyebrow">Creator Watch</div><h2>Every launcher, and what they did with their coin</h2></div></div>
+<p class="hint" style="margin:0">See how each creator traded their own launch: how much they bought, how much they sold and what they still hold. Diamond creators hold what they launch. Know who you are backing before you buy.</p>
+<div class="ck-top" id="cr-top"></div>
+<div class="cr-tabs" id="cr-tabs"><button class="on" data-f="all">All creators</button><button data-f="Diamond creator">Diamond creators</button><button data-f="Active trader">Active traders</button><button data-f="Takes profit">Takes profit</button></div>
+<div class="cr-grid" id="cr-list"><div class="card empty">Reading the chain…</div></div>
+</section></div></main>
+<footer class="footer" id="footer"></footer>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const { api, esc, fmtUsd, href, short } = GLIA; const $ = s => document.querySelector(s);
+  const bg = { 'Diamond creator': 'strong', 'Active trader': 'ok', 'Takes profit': 'watch' }, sg = { Holder: 'strong', Trimmed: 'ok', Exited: 'watch' };
+  const e3 = v => (+v).toFixed(3) + ' ETH'; let data = [], filt = 'all';
+  function draw() {
+    const list = filt === 'all' ? data : data.filter(c => c.badge === filt);
+    $('#cr-list').innerHTML = list.map(c => `<div class="card cr"><div class="hd"><a href="${href('/portfolio?address=' + c.address)}">${esc(short(c.address))}</a><span class="pill-g g-${bg[c.badge]}">${esc(c.badge)}</span></div>
+      <div class="stats"><div><span>Launched</span><b>${c.launched}</b></div><div><span>Holds</span><b>${c.holderRate}%</b></div><div><span>Market cap</span><b>${fmtUsd(c.mcapUsd)}</b></div></div>
+      ${c.coins.slice(0, 5).map(x => `<a class="cr-coin" href="${href('/checkup?token=' + x.token)}"><img src="${esc(href('/api/token/' + x.token + '/logo'))}" alt="" onerror="this.style.visibility='hidden'"><div><b>$${esc(x.symbol || short(x.token))}</b><div class="hint">bought ${e3(x.boughtEth)} · sold ${e3(x.soldEth)}</div></div><div class="r"><span class="pill-g g-${sg[x.style]}">${x.style}</span><div class="hint" style="margin-top:.25rem">holds ${x.holdPct}%</div></div></a>`).join('')}
+      ${c.coins.length > 5 ? `<div class="hint" style="padding-top:.5rem">+${c.coins.length - 5} more coins</div>` : ''}</div>`).join('') || '<div class="card empty">No creators in this group yet.</div>';
+  }
+  async function load() {
+    try {
+      const d = await api('creators'); data = d.creators || [];
+      const coins = data.reduce((a, c) => a + c.launched, 0), dia = data.filter(c => c.badge === 'Diamond creator').length;
+      $('#cr-top').innerHTML = `<div class="card"><span class="hint">Creators</span><b>${data.length}</b></div><div class="card"><span class="hint">Coins launched</span><b>${coins}</b></div><div class="card"><span class="hint">Diamond creators</span><b>${dia}</b></div><div class="card"><span class="hint">Graduated coins</span><b>${data.reduce((a, c) => a + c.graduated, 0)}</b></div>`;
+      draw();
+    } catch (e) { $('#cr-list').innerHTML = `<div class="card empty">${esc(e.message || 'Could not load creators.')}</div>`; }
+  }
+  $('#cr-tabs').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; filt = b.dataset.f; $('#cr-tabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); draw(); });
+  load(); setInterval(() => { if (!document.hidden) load(); }, 20000);
+});
+</script></body></html>
